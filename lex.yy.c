@@ -395,14 +395,14 @@ struct yy_trans_info
 	};
 static yyconst flex_int16_t yy_accept[87] =
     {   0,
-        1,    1,   32,   30,    1,    1,   16,   30,   18,   19,
+        2,    2,   32,   30,    2,    2,   16,   30,   18,   19,
        11,    9,    6,   10,   15,   12,    3,    3,    5,    7,
         8,    7,   29,   20,   21,   29,   29,   29,   29,   29,
-       29,   22,   30,   23,    1,    7,   13,    0,    0,    0,
+       29,   22,   30,   23,    2,    7,   13,    0,    0,    0,
         0,    0,    3,    0,    3,   29,   29,   29,   26,   29,
-       29,   29,   29,   14,    0,    0,    0,    0,    2,    4,
+       29,   29,   29,   14,    0,    0,    0,    0,    1,    4,
         0,    3,    3,    3,   29,   29,   17,   29,   29,   29,
-        0,    4,    2,    0,    3,   27,   29,   29,   29,   29,
+        0,    4,    1,    0,    3,   27,   29,   29,   29,   29,
        29,   29,   28,   25,   24,    0
     } ;
 
@@ -555,8 +555,9 @@ char *yytext;
 /* C code to be copied verbatim */
 #include <stdio.h>
 #include"lexical.h"
+#include"la.tab.h"
 void * yylval;
-#line 560 "lex.yy.c"
+#line 561 "lex.yy.c"
 
 #define INITIAL 0
 
@@ -743,10 +744,10 @@ YY_DECL
 	register char *yy_cp, *yy_bp;
 	register int yy_act;
     
-#line 33 "lexical-analyzer.l"
+#line 34 "lexical-analyzer.l"
 
     /*** Rules section ***/
-#line 750 "lex.yy.c"
+#line 751 "lex.yy.c"
 
 	if ( !(yy_init) )
 		{
@@ -842,245 +843,272 @@ do_action:	/* This label is used only to access EOF actions. */
 case 1:
 /* rule 1 can match eol */
 YY_RULE_SETUP
-#line 35 "lexical-analyzer.l"
-{/*do nothing space */}
+#line 36 "lexical-analyzer.l"
+{printf("line:%d COMMENT:%s\n", yylineno, yytext);}
 	YY_BREAK
 case 2:
 /* rule 2 can match eol */
 YY_RULE_SETUP
-#line 36 "lexical-analyzer.l"
-{printf("line:%d COMMENT:%s\n", yylineno, yytext);}
+#line 37 "lexical-analyzer.l"
+{/*do nothing space */}
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 37 "lexical-analyzer.l"
+#line 38 "lexical-analyzer.l"
 {
-	yylval = createNode(yylineno, END, INT, yytext);
+	yylval = createNode(yylineno, END, _INT, yytext);
 	printf("line:%d INT:%s\n", yylineno, yytext);
+	return INT;
 }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 41 "lexical-analyzer.l"
+#line 43 "lexical-analyzer.l"
 {
-	yylval = createNode(yylineno, END, FLOAT, yytext);
+	yylval = createNode(yylineno, END, _FLOAT, yytext);
 	printf("line:%d FLOAT:%s\n", yylineno, yytext);
+	return FLOAT;
 }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 45 "lexical-analyzer.l"
+#line 48 "lexical-analyzer.l"
 {
-	yylval = createNode(yylineno, END, SEMI, yytext);
+	yylval = createNode(yylineno, END, _SEMI, yytext);
 	printf("line:%d SEMI:%s\n", yylineno, yytext);
+	return SEMI;
 }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 49 "lexical-analyzer.l"
+#line 53 "lexical-analyzer.l"
 {
-	yylval = createNode(yylineno, END, COMMA, yytext);
+	yylval = createNode(yylineno, END, _COMMA, yytext);
 	printf("line:%d COMMA:%s\n", yylineno, yytext);
+	return COMMA;
 }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 53 "lexical-analyzer.l"
+#line 58 "lexical-analyzer.l"
 {
-	yylval = createNode(yylineno, END, RELOP, yytext);
+	yylval = createNode(yylineno, END, _RELOP, yytext);
 	printf("line:%d RELOP:%s\n", yylineno, yytext);
+	return RELOP;
 }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 57 "lexical-analyzer.l"
+#line 63 "lexical-analyzer.l"
 {
-	yylval = createNode(yylineno, END, ASSIGNOP, yytext);
+	yylval = createNode(yylineno, END, _ASSIGNOP, yytext);
 	printf("line:%d ASSIGNOP:%s\n", yylineno, yytext);
+	return ADDIGNOP;
 }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 61 "lexical-analyzer.l"
+#line 68 "lexical-analyzer.l"
 {
-	yylval = createNode(yylineno, END, PLUS, yytext);
+	yylval = createNode(yylineno, END, _PLUS, yytext);
 	printf("line:%d PLUS:%s\n", yylineno, yytext);
+	return PLUS;
 }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 65 "lexical-analyzer.l"
+#line 73 "lexical-analyzer.l"
 {
-	yylval = createNode(yylineno, END, MINUS, yytext);
+	yylval = createNode(yylineno, END, _MINUS, yytext);
 	printf("line:%d MINUS:%s\n", yylineno, yytext);
+	return MINUS;
 }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 69 "lexical-analyzer.l"
+#line 78 "lexical-analyzer.l"
 {
-	yylval = createNode(yylineno, END, STAR, yytext);
+	yylval = createNode(yylineno, END, _STAR, yytext);
 	printf("line:%d STAR:%s\n", yylineno, yytext);
+	return STAR;
 }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 73 "lexical-analyzer.l"
+#line 83 "lexical-analyzer.l"
 {
-	yylval = createNode(yylineno, END, DIV, yytext);
+	yylval = createNode(yylineno, END, _DIV, yytext);
 	printf("line:%d DIV:%s\n", yylineno, yytext);
+	return DIV;
 }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 77 "lexical-analyzer.l"
+#line 88 "lexical-analyzer.l"
 {
-	yylval = createNode(yylineno, END, AND, yytext);
+	yylval = createNode(yylineno, END, _AND, yytext);
 	printf("line:%d AND:%s\n", yylineno, yytext);
+	return AND;
 }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 81 "lexical-analyzer.l"
+#line 93 "lexical-analyzer.l"
 {
-	yylval = createNode(yylineno, END, OR, yytext);
+	yylval = createNode(yylineno, END, _OR, yytext);
 	printf("line:%d OR:%s\n", yylineno, yytext);
+	return OR;
 }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 85 "lexical-analyzer.l"
+#line 98 "lexical-analyzer.l"
 {
-	yylval = createNode(yylineno, END, DOT, yytext);
+	yylval = createNode(yylineno, END, _DOT, yytext);
 	printf("line:%d DOT:%s\n", yylineno, yytext);
+	return DOT;
 }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 89 "lexical-analyzer.l"
+#line 103 "lexical-analyzer.l"
 {
-	yylval = createNode(yylineno, END, NOT, yytext);
+	yylval = createNode(yylineno, END, _NOT, yytext);
 	printf("line:%d NOT:%s\n", yylineno, yytext);
+	return NOT;
 }
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 93 "lexical-analyzer.l"
+#line 108 "lexical-analyzer.l"
 {
-	yylval = createNode(yylineno, END, TYPE, yytext);
+	yylval = createNode(yylineno, END, _TYPE, yytext);
 	printf("line:%d TYPE:%s\n", yylineno, yytext);
+	return TYPE;
 }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 97 "lexical-analyzer.l"
+#line 113 "lexical-analyzer.l"
 {
-	yylval = createNode(yylineno, END, LP, yytext);
+	yylval = createNode(yylineno, END, _LP, yytext);
 	printf("line:%d LP:%s\n", yylineno, yytext);
+	return LP;
 }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 101 "lexical-analyzer.l"
+#line 118 "lexical-analyzer.l"
 {
-	yylval = createNode(yylineno, END, RP, yytext);
+	yylval = createNode(yylineno, END, _RP, yytext);
 	printf("line:%d RP:%s\n", yylineno, yytext);
-
-}
+	return RP;
+}	
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 106 "lexical-analyzer.l"
+#line 123 "lexical-analyzer.l"
 {
-	yylval = createNode(yylineno, END, LB, yytext);
+	yylval = createNode(yylineno, END, _LB, yytext);
 	printf("line:%d LB:%s\n", yylineno, yytext);
+	return LB;
 }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 110 "lexical-analyzer.l"
+#line 128 "lexical-analyzer.l"
 {
-	yylval = createNode(yylineno, END, RB, yytext);
+	yylval = createNode(yylineno, END, _RB, yytext);
 	printf("line:%d RB:%s\n", yylineno, yytext);
+	return RB;
 }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 114 "lexical-analyzer.l"
+#line 133 "lexical-analyzer.l"
 {
-	yylval = createNode(yylineno, END, LC, yytext);
+	yylval = createNode(yylineno, END, _LC, yytext);
 	printf("line:%d LC:%s\n", yylineno, yytext);
+	return LC;
 }
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 118 "lexical-analyzer.l"
+#line 138 "lexical-analyzer.l"
 {
-	yylval = createNode(yylineno, END, RC, yytext);
+	yylval = createNode(yylineno, END, _RC, yytext);
 	printf("line:%d RC:%s\n", yylineno, yytext);
+	return RC;
 }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 122 "lexical-analyzer.l"
+#line 143 "lexical-analyzer.l"
 {
-	yylval = createNode(yylineno, END, STRUCT, yytext);
+	yylval = createNode(yylineno, END, _STRUCT, yytext);
 	printf("line:%d STRUCT:%s\n", yylineno, yytext);
+	return STRUCT;
 }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 126 "lexical-analyzer.l"
+#line 148 "lexical-analyzer.l"
 {
-	yylval = createNode(yylineno, END, RETURN, yytext);
+	yylval = createNode(yylineno, END, _RETURN, yytext);
 	printf("line:%d RETURN:%s\n", yylineno, yytext);
+	return RETURN;
 }
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 130 "lexical-analyzer.l"
+#line 153 "lexical-analyzer.l"
 {
-	yylval = createNode(yylineno, END, IF, yytext);
+	yylval = createNode(yylineno, END, _IF, yytext);
 	printf("line:%d IF:%s\n", yylineno, yytext);
+	return IF;
 }
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 134 "lexical-analyzer.l"
+#line 158 "lexical-analyzer.l"
 {
-	yylval = createNode(yylineno, END, ELSE, yytext);
+	yylval = createNode(yylineno, END, _ELSE, yytext);
 	printf("line:%d ELSE:%s\n", yylineno, yytext);
+	return ELSE;
 }
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 138 "lexical-analyzer.l"
+#line 163 "lexical-analyzer.l"
 {
-	yylval = createNode(yylineno, END, WHILE, yytext);
+	yylval = createNode(yylineno, END, _WHILE, yytext);
 	printf("line:%d WHILE:%s\n", yylineno, yytext);
+	return WHILE;
 }
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 142 "lexical-analyzer.l"
+#line 168 "lexical-analyzer.l"
 {
-	yylval = createNode(yylineno, END, ID, yytext);
+	yylval = createNode(yylineno, END, _ID, yytext);
 	printf("line:%d ID:%s\n", yylineno, yytext);
+	return ID;
 }
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 146 "lexical-analyzer.l"
+#line 173 "lexical-analyzer.l"
 {
 	printf("Error type A at line %d: Mysterious character %s\n", yylineno, yytext);
+	error = 1;//then find error type A.need not print tree;
 }
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 149 "lexical-analyzer.l"
+#line 177 "lexical-analyzer.l"
 ECHO;
 	YY_BREAK
-#line 1084 "lex.yy.c"
+#line 1112 "lex.yy.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -2090,24 +2118,10 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 149 "lexical-analyzer.l"
+#line 177 "lexical-analyzer.l"
 
 
 /*** C Code section ***/
 
-int main(int argc, char** argv)
-{
- 	if (argc <= 1) return 1;
-	FILE* f = fopen(argv[1],"r");
-	if (!f)
-	{
-		perror(argv[1]);
-		return 1;
-	}	
-	printf("now start\n");
-	yyin = f;
-	yylex();
-	printf("now end\n");
-	return 0;
-}
+
 

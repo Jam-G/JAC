@@ -50,8 +50,22 @@ struct Node *addChild(struct Node *ft, int cn, ...){
 	return addpoint;
 }
 
-struct Node *VLRprintTree(struct Node *rt){
-	if(rt == NULL)
+struct Node *printTree(struct Node *rt, int nLayer){
+	if(rt == NULL){
 		return NULL;
-	return NULL;
+	}
+	//打印每个孩子,递归的打印
+	struct Node* current = rt ->child;
+	for(; current != NULL; current = current ->brother){
+		int k = 0; 
+		for(k = 0; k < nLayer; k ++)
+			printf(" ");
+		if(current ->type == END){
+			printf("%s: %s\n", ttoa(current ->tokentype), current ->name);
+		}else{	
+			printf("%s  (%d)\n", current->name, current ->lineno);
+			printTree(current, n + 1);
+		}	
+	}
+	return rt;
 }
