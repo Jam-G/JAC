@@ -1,0 +1,12 @@
+int main()
+{
+	if(a == 9){
+		do = test;
+		jam = eat;
+	}else if(test == 10){
+		do = free;
+	}else{
+		test = 0X5F;
+	}
+	return 0;
+}

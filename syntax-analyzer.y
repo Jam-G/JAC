@@ -2,24 +2,20 @@
 #include<stdio.h>
 #include"lexical.h"
 #include"lex.yy.c"
-
 %}
-
-/*declared types*/
 %union{
+	struct Node * type_node;
 	int type_int;
 	float type_float;
-	char *type_string;
-	struct Node *type_node
 }
+/*declared types*/
 
 /*declared tokens*/
-%token <type_node> INT FLOAT ID TYPE SEMI COMMA ASSIGNOP RELOP PLUS MINUS STAR 
-%token <type_node> DIV AND OR DOT NOT LP RP LB RB LC RC STRUCT RETURN IF ELSE WHILE
+%token  <type_node> INT FLOAT ID TYPE SEMI COMMA ASSIGNOP RELOP PLUS MINUS STAR 
+%token  <type_node> DIV AND OR DOT NOT LP RP LB RB LC RC STRUCT RETURN IF ELSE WHILE
 %right ASSIGNOP NOT
 %left OR AND RELOP PLUS MINUS STAR DIV DOT LB RB LP RP
 %nonassoc ELSE STRUCT RETURN WHILE
-
 
 /*declared non-terminals*/
 %type <type_node> Program ExtDefList ExtDef ExtDecList Specifier StructSpecifier 
@@ -32,7 +28,7 @@ Program:ExtDefList{
 };
 ExtDefList:ExtDef ExtDefList{ 
 	$$=createNode(@$.first_line, NOTEND, _ExtDefList, "ExtDefList");
-	addChiled($$, 2, $1, $2);
+	addChild($$, 2, $1, $2);
 }
 		  |{$$=NULL;};
 ExtDef:Specifier ExtDecList SEMI{
@@ -46,7 +42,8 @@ ExtDef:Specifier ExtDecList SEMI{
 	  |Specifier FunDec CompSt{
 	$$=createNode(@$.first_line, NOTEND, _ExtDef, "ExtDef");
 	addChild($$, 3, $1, $2, $3);
-};
+}
+	| error SEMI{haserror = 1;printf("Define Missing ';' before column:%d\n", @$.first_column);};
 ExtDecList:VarDec{
 	$$=createNode(@$.first_line, NOTEND, _ExtDecList, "ExtDecList");
 	addChild($$, 1, $1);
@@ -59,7 +56,7 @@ Specifier:TYPE{
 	$$=createNode(@$.first_line, NOTEND, _Specifier, "Specifier");
 	addChild($$, 1, $1);
 }
-		 |StructSpecifer{
+		 |StructSpecifier{
 	$$=createNode(@$.first_line, NOTEND, _Specifier, "Specifier");
 	addChild($$, 1, $1);
 };
@@ -95,7 +92,8 @@ FunDec:ID LP VarList RP{
 	  |ID LP RP{
 	$$=createNode(@$.first_line, NOTEND, _FunDec, "FunDec");
 	addChild($$, 3, $1, $2, $3);
-};
+}
+	|error RP{haserror = 1; printf("Function Missing ')' before column:%d\n", @$.first_column);};
 VarList:ParamDec COMMA VarList{
 	$$=createNode(@$.first_line, NOTEND, _VarList, "VarList");
 	addChild($$, 3, $1, $2, $3);
@@ -104,7 +102,7 @@ VarList:ParamDec COMMA VarList{
 	$$=createNode(@$.first_line, NOTEND, _VarList, "VarList");
 	addChild($$, 1, $1);
 };
-ParamDec:Speifier VarDec{
+ParamDec:Specifier VarDec{
 	$$=createNode(@$.first_line, NOTEND, _ParamDec, "ParamDec");
 	addChild($$, 2, $1, $2);
 };
@@ -140,7 +138,9 @@ Stmt:Exp SEMI{
 	|WHILE LP Exp RP Stmt{
 	$$=createNode(@$.first_line, NOTEND, _Stmt, "Stmt");
 	addChild($$, 5, $1, $2, $3, $4, $5);
-};
+}
+	|error RP{haserror = 1; printf("Statment Missing ')' before column:%d\n", @$.last_column);}
+	|error SEMI{haserror = 1; printf("Statment Missing ';' before column:%d\n", @$.last_column);};
 DefList:Def DefList{
 	$$=createNode(@$.first_line, NOTEND, _DefList, "DefList");
 	addChild($$, 2, $1, $2);
@@ -163,7 +163,7 @@ Dec:VarDec{
 	addChild($$, 1, $1);
 }
    |VarDec ASSIGNOP Exp{
-	$$=createNode(@$.firsht_line, NOTEND, _Dec, "Dec");
+	$$=createNode(@$.first_line, NOTEND, _Dec, "Dec");
 	addChild($$, 3, $1, $2, $3);
 };
 Exp:Exp ASSIGNOP Exp{
@@ -204,7 +204,7 @@ Exp:Exp ASSIGNOP Exp{
 }
    |MINUS Exp{
 	$$=createNode(@$.first_line, NOTEND, _Exp, "Exp");
-	addChild($$, 3, $1, $2, $3);
+	addChild($$, 2, $1, $2);
 }
    |NOT Exp{
 	$$=createNode(@$.first_line, NOTEND, _Exp, "Exp");
@@ -238,6 +238,7 @@ Exp:Exp ASSIGNOP Exp{
 	$$=createNode(@$.first_line, NOTEND, _Exp, "Exp");
 	addChild($$, 1, $1);
 };
+
 Args:Exp COMMA Args{
 	$$=createNode(@$.first_line, NOTEND, _Args, "Args");
 	addChild($$, 3, $1, $2, $3);
@@ -250,5 +251,5 @@ Args:Exp COMMA Args{
 %%
 
 int yyerror(){
-	printf("Error type B at line %d:\n", yylineno);
+	printf("Error type B at line %d: ", yylineno);
 }

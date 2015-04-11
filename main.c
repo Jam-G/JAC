@@ -1,23 +1,26 @@
 #include<stdio.h>
 #include"lexical.h"
+#include"syntax-analyzer.tab.h"
+extern int yyrestart(FILE *);
 struct Node *root;
-int error;
+int haserror;
 int main(int argc, char **argv){
 	if(argc <= 1)
 		return -1;
 	FILE *f = fopen(argv[1], "r");
 	if(!f){
-		perror("no file :%s\n", argv[1]);
-		retrun -1;
+		perror("file not found\n" );
+		return -1;
 	}
 	root = NULL;
 	yylineno = 1;
-	error = 0;
+	haserror = 0;
 	yyrestart(f);
 	yyparse();
-	if(error == 0){
+	if(haserror == 0){
 		printTree(root, 0);
 	}
+	return 0;
 }
 
 

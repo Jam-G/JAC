@@ -18,7 +18,8 @@ struct Node *createNode(int row, enum Type tp, enum TokenType tt, char *nm);
 struct Node *destroyNode(struct Node *gb);
 struct Node *addChild(struct Node *ft, int cn, ...);
 struct Node *printTree(struct Node *rt, int nLayer);
+char *ttoa(enum TokenType tt);
 extern struct Node *root;
 extern int yylineno;
-extern int error;
+extern int haserror;
 #endif
