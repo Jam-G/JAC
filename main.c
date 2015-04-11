@@ -20,6 +20,7 @@ int main(int argc, char **argv){
 	if(haserror == 0){
 		printTree(root, 0);
 	}
+	destroyTree(root);
 	return 0;
 }
 

@@ -27,7 +27,16 @@ struct Node *destroyNode(struct Node *gb){
 	}
 	return NULL;
 }
+void destroyTree(struct Node*rt){
+	if(rt == NULL)
+		return;
+	struct Node *now = rt ->child;
+	for(;now != NULL; now = now ->brother)
+		destroyTree(now);
+	destroyNode(rt);
+	return;
 
+}
 struct Node *addChild(struct Node *ft, int cn, ...){
 //	printf("enter add :%d\n", cn);
 	if(ft == NULL || cn <= 0){
@@ -77,18 +86,19 @@ struct Node *printTree(struct Node *rt, int nLayer){
 	//打印自己
 	int k = 0; 
 	for(k = 0; k < nLayer; k ++)
-		printf("   ");
+		printf("  ");
 
 	if(rt ->type == END){
-		printf("%s: ", ttoa(rt ->tokentype));
+		printf("%s", ttoa(rt ->tokentype));
 		if(rt ->tokentype == _INT){
-			printf("%d\n", iatoi(rt ->name));
+			printf(": %d\n", iatoi(rt ->name));
 		}else if(rt ->tokentype == _FLOAT){
-			printf("%f\n", iatof(rt ->name));
-		}else
-			printf("%s\n", rt ->name);
+			printf(": %f\n", iatof(rt ->name));
+		}else if(rt ->tokentype == _ID || rt ->tokentype == _TYPE)
+			printf(": %s\n", rt ->name);
+		else printf("\n");
 	}else{	
-		printf("%s  (%d)\n", rt->name, rt ->lineno);
+		printf("%s (%d)\n", rt->name, rt ->lineno);
 	}	
 	//打印每个孩子,递归的打印
 	struct Node* current = rt ->child;

@@ -29,7 +29,7 @@ FLOAT_EXP (({DIGIT}*\.{DIGIT}+)|({DIGIT}+\.{DIGIT}*))[eE][+-]?{DIGIT}+
 FLOAT {FLOAT_NOR}|{FLOAT_EXP}
 ID {LETTER_}({LETTER_}|{DIGIT})*
 TYPE (int)|(float)
-COMMENT (\/\/.*$)|(\/\*[.\n\r ]*\*\/)
+COMMENT (\/\/.*)|(\/\*([^*]|[\r\n]|(\*+([^*\/]|[\r\n])))*\*+\/)
 %option yylineno
 %option noyywrap
 
@@ -37,7 +37,7 @@ COMMENT (\/\/.*$)|(\/\*[.\n\r ]*\*\/)
 
 %%
     /*** Rules section ***/
-{COMMENT} {printf("line:%d COMMENT:%s\n", yylineno, yytext);}
+{COMMENT} {/*printf("line:%d COMMENT:%s\n", yylineno, yytext);*/}
 \n {yycolumn = 1;}
 ([ \t\r])+ {/*do nothing space */}
 {INTEGER} {
