@@ -121,55 +121,56 @@ RETURN (281) 30
 IF (282) 31 32
 ELSE (283) 32
 WHILE (284) 33
+LOWER_THAN_ELSE (285)
 
 
 Nonterminals, with rules where they appear
 
-$accept (30)
+$accept (31)
     on left: 0
-Program (31)
+Program (32)
     on left: 1, on right: 0
-ExtDefList (32)
+ExtDefList (33)
     on left: 2 3, on right: 1 2
-ExtDef (33)
+ExtDef (34)
     on left: 4 5 6 7, on right: 2
-ExtDecList (34)
+ExtDecList (35)
     on left: 8 9, on right: 4 9
-Specifier (35)
+Specifier (36)
     on left: 10 11, on right: 4 5 6 24 37 38
-StructSpecifier (36)
+StructSpecifier (37)
     on left: 12 13, on right: 11
-OptTag (37)
+OptTag (38)
     on left: 14 15, on right: 12
-Tag (38)
+Tag (39)
     on left: 16, on right: 13
-VarDec (39)
+VarDec (40)
     on left: 17 18, on right: 8 9 18 24 41 42 43
-FunDec (40)
+FunDec (41)
     on left: 19 20 21, on right: 6
-VarList (41)
+VarList (42)
     on left: 22 23, on right: 19 22
-ParamDec (42)
+ParamDec (43)
     on left: 24, on right: 22 23
-CompSt (43)
+CompSt (44)
     on left: 25, on right: 6 29
-StmtList (44)
+StmtList (45)
     on left: 26 27, on right: 25 26
-Stmt (45)
+Stmt (46)
     on left: 28 29 30 31 32 33 34, on right: 26 31 32 33
-DefList (46)
+DefList (47)
     on left: 35 36, on right: 12 25 35
-Def (47)
+Def (48)
     on left: 37 38, on right: 35
-DecList (48)
+DecList (49)
     on left: 39 40, on right: 37 40
-Dec (49)
+Dec (50)
     on left: 41 42 43, on right: 39 40
-Exp (50)
+Exp (51)
     on left: 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61
     62 63 64, on right: 28 30 31 32 33 42 43 44 45 46 47 48 49 50 51
     52 53 54 57 58 63 65 66
-Args (51)
+Args (52)
     on left: 65 66, on right: 55 65
 
 

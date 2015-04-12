@@ -15,8 +15,8 @@
 %token  <type_node> DIV AND OR DOT NOT LP RP LB RB LC RC STRUCT RETURN IF ELSE WHILE
 %right ASSIGNOP NOT
 %left OR AND RELOP PLUS MINUS STAR DIV DOT LB RB LP RP
+%nonassoc LOWER_THAN_ELSE
 %nonassoc ELSE STRUCT RETURN WHILE
-
 /*declared non-terminals*/
 %type <type_node> Program ExtDefList ExtDef ExtDecList Specifier StructSpecifier 
 %type <type_node> OptTag Tag VarDec FunDec VarList ParamDec CompSt StmtList Stmt DefList Def DecList Dec Exp Args
@@ -127,7 +127,7 @@ Stmt:Exp SEMI{
 	$$=createNode(@$.first_line, NOTEND, _Stmt, "Stmt");
 	addChild($$, 3, $1, $2, $3);
 }
-	|IF LP Exp RP Stmt{
+	|IF LP Exp RP Stmt %prec LOWER_THAN_ELSE{
 	$$=createNode(@$.first_line, NOTEND, _Stmt, "Stmt");
 	addChild($$, 5, $1, $2, $3, $4, $5);
 }

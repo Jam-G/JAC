@@ -71,7 +71,8 @@ extern int yydebug;
     RETURN = 281,
     IF = 282,
     ELSE = 283,
-    WHILE = 284
+    WHILE = 284,
+    LOWER_THAN_ELSE = 285
   };
 #endif
 
@@ -86,7 +87,7 @@ union YYSTYPE
 	int type_int;
 	float type_float;
 
-#line 90 "syntax-analyzer.tab.h" /* yacc.c:1909  */
+#line 91 "syntax-analyzer.tab.h" /* yacc.c:1909  */
 };
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
