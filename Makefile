@@ -11,10 +11,10 @@ parser:main.c syntax-analyzer.tab.c syntax-analyzer.tab.h lexical.c lexical.h le
 	gcc main.c syntax-analyzer.tab.c lexical.c -Wall -lfl -ly -o parser
 .PHONY:clean debug
 clean :
-	rm lex.yy.c
-	rm syntax-analyzer.tab.*
-	rm parser
-	rm *.output	
+	rm -f lex.yy.c
+	rm -f syntax-analyzer.tab.*
+	rm -f parser
+	rm -f *.output	
 debug:flex bisondebug parser
 
 
