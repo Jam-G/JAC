@@ -9,7 +9,7 @@ bison:syntax-analyzer.y
 	bison -d -t syntax-analyzer.y
 parser:main.c syntax-analyzer.tab.c syntax-analyzer.tab.h lexical.c lexical.h lex.yy.c
 	gcc main.c syntax-analyzer.tab.c lexical.c -Wall -lfl -ly -o parser
-.PHONY:clean debug test testall
+.PHONY:clean debug test testall testac
 clean :
 	rm -f lex.yy.c
 	rm -f syntax-analyzer.tab.*
@@ -29,3 +29,5 @@ test:
 	./parser mtest6.cmm
 testall:
 	./parser *.cmm	
+testac:
+	./parser a*.c

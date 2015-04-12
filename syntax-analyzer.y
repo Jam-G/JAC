@@ -43,7 +43,7 @@ ExtDef:Specifier ExtDecList SEMI{
 	$$=createNode(@$.first_line, NOTEND, _ExtDef, "ExtDef");
 	addChild($$, 3, $1, $2, $3);
 }
-	| error SEMI{printf("Define Missing ';' before column:%d\n", @$.first_column);};
+	| error SEMI{printf("Define Missing ';' before column:%d  ", @$.first_column);};
 ExtDecList:VarDec{
 	$$=createNode(@$.first_line, NOTEND, _ExtDecList, "ExtDecList");
 	addChild($$, 1, $1);
@@ -93,7 +93,7 @@ FunDec:ID LP VarList RP{
 	$$=createNode(@$.first_line, NOTEND, _FunDec, "FunDec");
 	addChild($$, 3, $1, $2, $3);
 }
-	|error RP{printf("Function Missing ')' before column:%d\n", @$.first_column);};
+	|error RP{printf("Function Missing ')' before column:%d  ", @$.first_column);};
 VarList:ParamDec COMMA VarList{
 	$$=createNode(@$.first_line, NOTEND, _VarList, "VarList");
 	addChild($$, 3, $1, $2, $3);
@@ -139,7 +139,7 @@ Stmt:Exp SEMI{
 	$$=createNode(@$.first_line, NOTEND, _Stmt, "Stmt");
 	addChild($$, 5, $1, $2, $3, $4, $5);
 }
-	|error SEMI{printf("Statment Missing ';' before column:%d\n", @$.last_column);};
+	|error SEMI{printf("Statment Missing ';' before column:%d  ", @$.last_column);};
 DefList:Def DefList{
 	$$=createNode(@$.first_line, NOTEND, _DefList, "DefList");
 	addChild($$, 2, $1, $2);
@@ -149,7 +149,7 @@ Def:Specifier DecList SEMI{
 	$$=createNode(@$.first_line, NOTEND, _Def, "Def");
 	addChild($$, 3, $1, $2, $3);
 }
-	|Specifier error SEMI{printf("Define of Variable error after column:%d\n", @$.first_column);};
+	|Specifier error SEMI{printf("Define of Variable error after column:%d  ", @$.first_column);};
 DecList:Dec{
 	$$=createNode(@$.first_line, NOTEND, _DecList, "DecList");
 	addChild($$, 1, $1);
@@ -166,7 +166,7 @@ Dec:VarDec{
 	$$=createNode(@$.first_line, NOTEND, _Dec, "Dec");
 	addChild($$, 3, $1, $2, $3);
 }
-	|VarDec error Exp{printf("Decilition Error; Missing '=' before column:%d\n", @3.first_column);};
+	|VarDec error Exp{printf("Decilition Error; Missing '=' before column:%d  ", @3.first_column);};
 Exp:Exp ASSIGNOP Exp{
 	$$=createNode(@$.first_line, NOTEND, _Exp, "Exp");
 	addChild($$, 3, $1, $2, $3);
@@ -239,9 +239,9 @@ Exp:Exp ASSIGNOP Exp{
 	$$=createNode(@$.first_line, NOTEND, _Exp, "Exp");
 	addChild($$, 1, $1);
 }
-	|LP error RP{haserror = 1; printf("Expretion Error; after column:%d\n", @$.first_column);}
-	|Exp LB error RB{haserror = 1; printf("Expretion Error; afert column:%d\n", @2.last_column);}
-	|error DOT ID{haserror = 1; printf("Expretion Error; Missing some expretion before column:%d\n", @2.first_column);};
+	|LP error RP{haserror = 1; printf("Expretion Error; after column:%d  ", @$.first_column);}
+	|Exp LB error RB{haserror = 1; printf("Expretion Error; afert column:%d  ", @2.last_column);}
+	|error DOT ID{haserror = 1; printf("Expretion Error; Missing some expretion before column:%d  ", @2.first_column);};
 
 Args:Exp COMMA Args{
 	$$=createNode(@$.first_line, NOTEND, _Args, "Args");
@@ -255,6 +255,8 @@ Args:Exp COMMA Args{
 %%
 
 int yyerror(){
+	if(haserror != 0)
+		printf("\n");
 	haserror = 1;
 	printf("Error type B at line %d: ", yylineno);
 }

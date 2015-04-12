@@ -1500,7 +1500,7 @@ yyreduce:
 
   case 8:
 #line 46 "syntax-analyzer.y" /* yacc.c:1646  */
-    {printf("Define Missing ';' before column:%d\n", (yyloc).first_column);}
+    {printf("Define Missing ';' before column:%d  ", (yyloc).first_column);}
 #line 1505 "syntax-analyzer.tab.c" /* yacc.c:1646  */
     break;
 
@@ -1620,7 +1620,7 @@ yyreduce:
 
   case 22:
 #line 96 "syntax-analyzer.y" /* yacc.c:1646  */
-    {printf("Function Missing ')' before column:%d\n", (yyloc).first_column);}
+    {printf("Function Missing ')' before column:%d  ", (yyloc).first_column);}
 #line 1625 "syntax-analyzer.tab.c" /* yacc.c:1646  */
     break;
 
@@ -1731,7 +1731,7 @@ yyreduce:
 
   case 35:
 #line 142 "syntax-analyzer.y" /* yacc.c:1646  */
-    {printf("Statment Missing ';' before column:%d\n", (yyloc).last_column);}
+    {printf("Statment Missing ';' before column:%d  ", (yyloc).last_column);}
 #line 1736 "syntax-analyzer.tab.c" /* yacc.c:1646  */
     break;
 
@@ -1761,7 +1761,7 @@ yyreduce:
 
   case 39:
 #line 152 "syntax-analyzer.y" /* yacc.c:1646  */
-    {printf("Define of Variable error after column:%d\n", (yyloc).first_column);}
+    {printf("Define of Variable error after column:%d  ", (yyloc).first_column);}
 #line 1766 "syntax-analyzer.tab.c" /* yacc.c:1646  */
     break;
 
@@ -1803,7 +1803,7 @@ yyreduce:
 
   case 44:
 #line 169 "syntax-analyzer.y" /* yacc.c:1646  */
-    {printf("Decilition Error; Missing '=' before column:%d\n", (yylsp[0]).first_column);}
+    {printf("Decilition Error; Missing '=' before column:%d  ", (yylsp[0]).first_column);}
 #line 1808 "syntax-analyzer.tab.c" /* yacc.c:1646  */
     break;
 
@@ -1971,19 +1971,19 @@ yyreduce:
 
   case 63:
 #line 242 "syntax-analyzer.y" /* yacc.c:1646  */
-    {haserror = 1; printf("Expretion Error; after column:%d\n", (yyloc).first_column);}
+    {haserror = 1; printf("Expretion Error; after column:%d  ", (yyloc).first_column);}
 #line 1976 "syntax-analyzer.tab.c" /* yacc.c:1646  */
     break;
 
   case 64:
 #line 243 "syntax-analyzer.y" /* yacc.c:1646  */
-    {haserror = 1; printf("Expretion Error; afert column:%d\n", (yylsp[-2]).last_column);}
+    {haserror = 1; printf("Expretion Error; afert column:%d  ", (yylsp[-2]).last_column);}
 #line 1982 "syntax-analyzer.tab.c" /* yacc.c:1646  */
     break;
 
   case 65:
 #line 244 "syntax-analyzer.y" /* yacc.c:1646  */
-    {haserror = 1; printf("Expretion Error; Missing some expretion before column:%d\n", (yylsp[-1]).first_column);}
+    {haserror = 1; printf("Expretion Error; Missing some expretion before column:%d  ", (yylsp[-1]).first_column);}
 #line 1988 "syntax-analyzer.tab.c" /* yacc.c:1646  */
     break;
 
@@ -2245,6 +2245,8 @@ yyreturn:
 
 
 int yyerror(){
+	if(haserror != 0)
+		printf("\n");
 	haserror = 1;
 	printf("Error type B at line %d: ", yylineno);
 }
