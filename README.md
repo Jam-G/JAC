@@ -13,6 +13,7 @@
 	make debug:在debug模式下完成上述步骤
 	make test:自动测试讲义中给出的测试样例
 	make testall:自动测试当前目录下的所有.cmm文件
+	make testac:自动测试a*.c的测试文件
 	make clean:清除所有编译结果
 此外本项目开发情况请查看:https://github.com/Jam-G/JAC
 
