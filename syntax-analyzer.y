@@ -109,7 +109,8 @@ ParamDec:Specifier VarDec{
 CompSt:LC DefList StmtList RC{
 	$$=createNode(@$.first_line, NOTEND, _CompSt, "CompSt");
 	addChild($$, 4, $1, $2, $3, $4);
-};
+}
+	|error RC{printf("CompSt missing a '{"  );};
 StmtList:Stmt StmtList{
 	$$=createNode(@$.first_line, NOTEND, _StmtList, "StmtList");
 	addChild($$, 2, $1, $2);
@@ -239,9 +240,17 @@ Exp:Exp ASSIGNOP Exp{
 	$$=createNode(@$.first_line, NOTEND, _Exp, "Exp");
 	addChild($$, 1, $1);
 }
-	|LP error RP{haserror = 1; printf("Expretion Error; after column:%d  ", @$.first_column);}
-	|Exp LB error RB{haserror = 1; printf("Expretion Error; afert column:%d  ", @2.last_column);}
-	|error DOT ID{haserror = 1; printf("Expretion Error; Missing some expretion before column:%d  ", @2.first_column);};
+	|LP error RP{printf("Expretion Error; after column:%d  ", @$.first_column);}
+	|Exp LB error RB{printf("Expretion Error; afert column:%d  ", @2.last_column);}
+	|error DOT ID{printf("Expretion Error; Missing some expretion before column:%d  ", @2.first_column);}
+	|error AND Exp{printf("Error Expretion before column:%d  ", @2.first_column);}
+	|error DIV Exp{printf("Error Expretion before column:%d  ", @2.first_column);}
+	|error STAR Exp{printf("Error Expretion before column:%d  ", @2.first_column);}
+	|error RELOP Exp{printf("Error Expretion before column:%d  ", @2.first_column);}
+	|error PLUS Exp{printf("Error Expretion before column:%d  ", @2.first_column);}
+	|error MINUS Exp{printf("Error Expretion before column:%d  ", @2.first_column);}
+	|error ASSIGNOP Exp{printf("Error Expretion before column:%d  ", @2.first_column);}
+	|error OR Exp{printf("Error Expretion before column:%d  ", @2.first_column);};
 
 Args:Exp COMMA Args{
 	$$=createNode(@$.first_line, NOTEND, _Args, "Args");
