@@ -82,7 +82,7 @@ extern void semantic_Def(struct Node *node);
 extern void semantic_DecList(struct Node *node, enum VarType type, struct Structure *strp);
 extern void semantic_Dec(struct Node *node, enum VarType basetype, struct Structure *strp);
 extern union Varp semantic_Exp(int *leftorright, struct Node *node, enum VarType *type);
-
+extern struct ParList *semantic_Args(struct Node *node);
 //check the struct id exist if in the table can't find
 //the struct means has not defined then return -1, else return 1
 //and this function need check the condation that the structure don't have name
@@ -91,7 +91,12 @@ extern struct Structure * getStructureByName(char *name);
 extern struct Structure * newStruct(struct Node *idnode, struct Node *node);
 extern struct VariMsg * newVar(struct Node *node, enum VarType basetype, union Varp vtp);
 extern struct VariMsg * newArrayVar(struct Node *node, union Varp arraybase);
-extern void newFunction(struct Node *idnode, enum VarType retype, struct Structure *restrp, struct ParList *args); 
+extern struct FuncMsg * newFunction(struct Node *idnode, enum VarType retype, struct Structure *restrp, struct ParList *args); 
 extern int getIntVal(struct Node *intnode);
 extern int checkAssignType(enum VarType lefttype, union Varp leftp, enum VarType righttype, union Varp rightp);
+extern union Varp getVar(struct Node *idnode, enum VarType *vtp);
+extern union Varp getStructureMem(struct Structure * sp, struct Node *memnode, enum VarType *memtype);
+extern struct FuncMsg *getFuncMsg(struct Node *node);
+extern int checkArg(struct FuncMsg *fc, struct ParList *arg);
+extern unsigned int makehash(char *name);
 #endif

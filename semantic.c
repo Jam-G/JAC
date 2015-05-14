@@ -9,6 +9,7 @@ symnode_t *symtable[HASHLEN];
 strnode_t *strtable[HASHLEN];
 funnode_t *funtable[HASHLEN];
 
+struct FuncMsg * nowFunc;
 void semantic(){
 	inittables();
 	semantic_program(root);
@@ -151,6 +152,7 @@ struct VariMsg * semantic_VarDec(struct Node *node, enum VarType basetype, struc
 		arraybase.ap->size = getIntVal(child->brother->brother);
 		return newArrayVar(child, arraybase);
 	}
+	return NULL;
 }
 
 void semantic_FunDec(struct Node *node, enum VarType retype, struct Structure *strp){
@@ -165,7 +167,7 @@ void semantic_FunDec(struct Node *node, enum VarType retype, struct Structure *s
 	}else{
 		args = NULL;// means this function's args is NULL
 	}
-	newFunction(child, retype, strp, args);
+	nowFunc = newFunction(child, retype, strp, args);
 }
 
 struct ParList* semantic_VarList(struct Node *node){
@@ -245,6 +247,41 @@ void semantic_Stmt(struct Node *node){
 		return;
 	}
 	struct Node *child = node->child;
+	if(child->tokentype == _Exp){
+		int left;
+		enum VarType exptype;
+		semantic_Exp(&left, child, &exptype);
+	}
+	else if(child->tokentype == _CompSt)
+		semantic_CompSt(child);
+	else if(child->tokentype == _RETURN){
+		int left;
+		enum VarType retype;
+		union Varp vp = semantic_Exp(&left, child->brother, &retype);
+		if(checkAssignType(nowFunc->retype, nowFunc->repointer, retype, vp) < 0)
+			printf("Error type 8 at Line %d:return value is not the function expected\n", child->lineno);
+
+	}else if(child->tokentype == _IF){
+		child = child->brother->brother;
+		int left;
+		enum VarType vartp;
+		semantic_Exp(&left, child, &vartp);
+		child = child->brother->brother;
+		semantic_Stmt(child);
+		child = child->brother;
+		if(child != NULL && child->tokentype == _ELSE){
+			child = child->brother;
+			semantic_Stmt(child);
+		}
+	}else if(child->tokentype == _WHILE){
+		int left;
+		enum VarType whiletype;
+		child = child->brother->brother;
+		semantic_Exp(&left, child, &whiletype);
+		child = child->brother->brother;
+		semantic_Stmt(child);
+
+	}
 
 }
 void semantic_Def(struct Node *node){
@@ -340,21 +377,134 @@ union Varp semantic_Exp(int *leftorright, struct Node *node, enum VarType *type)
 			}
 			return et.ap->base;
 		}else if(child->tokentype == _DOT){//struct
-
+			enum VarType dottype;
+			child = child->brother;
+			if(etp != V_STRUCT)
+				printf("Error type 13 at Line %d:use Dot with a var isn't a structure\n", child->lineno);
+			union Varp dotvp = getStructureMem(et.sp, child, &dottype);
+			if(dottype == V_ERROR)
+				printf("Error type 14 at Line %d:the struct don't have the menber wanted\n", child->lineno);
+			*type = dottype;
+			return dotvp;
+			*leftorright = 1;//structer member has left val;
 		}else{//op
-		
+			child = child->brother;
+			enum VarType sectype;
+			semantic_Exp(&left, child, &sectype);
+			if(sectype != etp || sectype == V_STRUCT || sectype == V_ARRAY\
+					|| sectype == V_ERROR || etp == V_STRUCT || etp == V_ARRAY || etp == V_ERROR){
+				printf("Error type 7 at Line %d:oprator cant match\n", child->lineno);
+			}
+			*leftorright = -1;//op exp didn't have left value
+			*type = etp;
+			return et;
 		}
 	}else if(child->tokentype == _LP){
+		child = child->brother;
+		return semantic_Exp(leftorright, child, type);
+	}else if(child->tokentype == _ID){	
 	
-	}else if(child->tokentype == _ID){
-	
+		if(child->brother == NULL){
+			*leftorright = 1;
+			union Varp revp =  getVar(child, type);
+			if(*type == V_ERROR)
+				printf("Error type 1 at Line %d: use od var didn't dec\n", child->lineno);
+			return revp;
+		}
+		child = child->brother;
+		struct FuncMsg *fc = getFuncMsg(node->child);
+		if(fc == NULL){
+			enum VarType maybevartype;
+			getVar(node->child, &maybevartype);
+			if(maybevartype == V_ERROR)
+				printf("Error type 11 at Line %d:call a function didn't exist\n", child->lineno);
+			else
+				printf("Error type 2 at Line %d:call a varibale as a function\n", child->lineno);
+
+		}else{
+			struct ParList * arg = NULL;
+			if(child->tokentype == _Args){
+				arg = semantic_Args(child->brother);
+			}
+			if(checkArg(fc, arg) < 0)
+				printf("Error type 9 at Line %d:call a function the argscant match\n", child->lineno);
+		}
 	}else if(child->tokentype == _MINUS){
-	
+		child = child->brother;
+		int right;
+		*leftorright = -1;//this will not hava left value;
+		union Varp re = semantic_Exp(&right, child, type);
+		if(*type == V_STRUCT || *type != V_ARRAY || *type == V_ERROR)
+			printf("Error type 7 at Line %d:oprator cant match\n", child->lineno);
+		return re;
 	}else if(child->tokentype == _NOT){
+		child = child->brother;
+		int right;
+		*leftorright = -1;
+		union Varp re = semantic_Exp(&right, child, type);
+		if(*type != V_INT)
+			printf("Error type 7 at Line %d:oprator cant match\n", child->lineno);
+		return re;
 	}else if(child->tokentype == _INT){
+		*leftorright = -1;
+		*type = V_INT;
+		union Varp re;
+		re.sp = NULL;
+		return re;
 	}else if(child->tokentype == _FLOAT){
+		*leftorright = -1;
+		*type = V_FLOAT;
+		union Varp re;
+		re.sp = NULL;
+		return	re;
 	}
 	
 }
 
+struct ParList * semantic_Args(struct Node *node){
+	if(node == NULL || node->tokentype != _Args){
+		printf("the node is not a Args\n");
+		return NULL;
+	}
+	struct Node *child = node->child;
+	int left;
+	enum VarType exptype;
+	union Varp vp = semantic_Exp(&left, child, &exptype);
+	struct ParList *the = malloc(sizeof(struct ParList));
+	the->partype = exptype;
+	the->parpointer = vp;
+	the->name = NULL;
+	the->next = NULL;
+	child = child->brother;
+	if(child != NULL){
+		child = child->brother;
+		the->next =	semantic_Args(child);
+	}
+	return the;
+}
 
+unsigned int makehash(char * name){
+	int len = strlen(name);
+	unsigned int *p = (unsigned int*)name;
+	int i = 0;
+	unsigned int sum = 0;
+	while(i < len){
+		sum += *p;
+		p ++;
+		i += sizeof(unsigned int);
+	}
+	if(i != len){
+		unsigned char * cp =(unsigned char *)(p - 1);
+		i -= sizeof(int);
+		while(i < len){
+			sum += *cp;
+			i++;
+			cp++;
+		}
+	}
+	return sum % HASHLEN;
+}
+
+struct VariMsg *newVar(struct Node *node, enum VarType basetype, union Varp vp){
+	
+}
