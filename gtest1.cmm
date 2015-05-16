@@ -1,0 +1,10 @@
+struct A{
+	int a;
+	float b;
+};
+struct B{
+	int a;
+	float c = 0;
+};
+int main(){
+}
