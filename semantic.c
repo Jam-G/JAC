@@ -5,11 +5,18 @@
 #include"lexical.h"
 #include<assert.h>
 #define HASHLEN 1000
+#define STACKLEN 100
 symnode_t *symtable[HASHLEN];
 strnode_t *strtable[HASHLEN];
 funnode_t *funtable[HASHLEN];
 
 struct FuncMsg * nowFunc;
+int nowerror = 0;
+int structlayer = 0; 
+//作用域嵌套
+symnode_t* symstack[STACKLEN];
+symnode_t* currenttail;//当前作用域的尾节点
+int stackindex = 0;
 void semantic(){
 	inittables();
 	semantic_program(root);
@@ -20,6 +27,7 @@ void inittables()
 	memset(symtable, 0, sizeof(symnode_t *) * HASHLEN);
 	memset(strtable, 0, sizeof(strnode_t *) * HASHLEN);
 	memset(funtable, 0, sizeof(funnode_t *) * HASHLEN);
+	nowFunc = NULL;
 }
 void semantic_program(struct Node *node){
 	if(node == NULL || node->tokentype != _Program){
@@ -36,13 +44,16 @@ void semantic_ExtDefList(struct Node *node){
 		return;
 	}
 	struct Node *child = node->child;
-	while(child != NULL){
-		if(child->tokentype == _ExtDef){
-			semantic_ExtDef(child);
-		}else if(child->tokentype == _ExtDefList){
+//	printf("ExtDefList\n");
+	if(child != NULL){
+		semantic_ExtDef(child);
+//		printf("exit of ExtDef\n");
+		child = child->brother;
+		if(child != NULL){
+//			printf("next ExtDefList\n");
 			semantic_ExtDefList(child);
 		}
-		child = child->brother;
+		
 	}
 }
 
@@ -53,7 +64,12 @@ void semantic_ExtDef(struct Node *node){
 	}
 	struct Node *child = node->child;
 	enum VarType type;
+	if(child->brother->tokentype == _FunDec){
+		stackindex ++;
+		symstack[stackindex] = NULL;
+	}
 	struct Structure * strp = semantic_Specifier(child, &type);
+//	printf("anaysis a specifier @layer %d, type %d, struct %d, int %d\n",stackindex,  type, V_STRUCT, V_INT);
 	if(type == V_ERROR){
 		return;
 	}
@@ -67,17 +83,25 @@ void semantic_ExtDef(struct Node *node){
 		semantic_FunDec(child, type, strp);
 		child = child->brother;
 		semantic_CompSt(child);
+		symnode_t *temp = symstack[stackindex];
+		while(temp != NULL){
+			temp->layer = -1;
+			temp = temp->layernext;
+		}
+		stackindex --;
 	}
 }
 
 struct Structure * semantic_Specifier(struct Node *node, enum VarType *type){
 	if(node == NULL || node->tokentype != _Specifier){
 		printf("the node is not a Specifier\n");
+		if(node != NULL)
+			printf("the node is %s\n", node->name);
 		*type = V_ERROR;
 		return NULL;
 	}
 	struct Node *child = node ->child;
-	while(child != NULL){
+	if(child != NULL){
 		switch(child->tokentype){
 			case _TYPE:{
 						   if(strcmp(child->name, "int") == 0)
@@ -102,8 +126,10 @@ struct Structure * semantic_Specifier(struct Node *node, enum VarType *type){
 }
 
 struct Structure * semantic_StructSpecifier(struct Node *node, enum VarType *type){
-	if(node == NULL || node->tokentype ){
+	if(node == NULL || node->tokentype != _StructSpecifier){
 		printf("the node is not a StructSpecifier\n");
+		if(node != NULL)
+			printf("the node is %s\n", node->name);
 		*type = V_ERROR;
 		return NULL;
 	}
@@ -111,11 +137,16 @@ struct Structure * semantic_StructSpecifier(struct Node *node, enum VarType *typ
 	child = child->brother;//the first must be struct,then can skip it
 	if(child ->tokentype == _Tag){//this is the id of struct name, dont have to anysis the structure
 		*type = V_STRUCT;
-		return getStructureByName(child->child->name);
+	//	printf("want to get struct\n");
+		struct Structure * r = getStructureByName(child->child->name);
+		if(r == NULL)
+			printf("Error type 17 at Line %d:undefined structure\n", node->lineno);
+		return r;
 	}else if(child ->tokentype == _OptTag){
 		*type = V_STRUCT;
 		//child is opttag, child's child is ID OR NULL, so pass the id node ,
 		//then can check if id node is NULL
+//		printf("try to new a struct\n");
 		return newStruct(child->child, child->brother->brother);
 	}
 	*type = V_ERROR;
@@ -125,6 +156,8 @@ struct Structure * semantic_StructSpecifier(struct Node *node, enum VarType *typ
 void semantic_ExtDecList(struct Node *node, enum VarType basetype, struct Structure * strp){
 	if(node == NULL || node->tokentype != _ExtDecList){
 		printf("the node is not a ExtDecList\n");
+		if(node != NULL)
+			printf("the node is%s\n", node->name);
 		return;
 	}
 	struct Node *child = node->child;	
@@ -167,6 +200,11 @@ void semantic_FunDec(struct Node *node, enum VarType retype, struct Structure *s
 	}else{
 		args = NULL;// means this function's args is NULL
 	}
+	if(nowerror == 1){
+		//险释放上一哥错误函数的空间
+		free(nowFunc);
+		nowerror = 0;//恢复无错情况
+	}
 	nowFunc = newFunction(child, retype, strp, args);
 }
 
@@ -183,6 +221,7 @@ struct ParList* semantic_VarList(struct Node *node){
 	if(child != NULL){
 		head->next = semantic_VarList(child->brother);
 	}
+	return head;
 }
 
 void semantic_ParamDec(struct Node *node, enum VarType *type, union Varp *vp, char **name){
@@ -212,33 +251,44 @@ void semantic_CompSt(struct Node *node){
 	}
 	struct Node *child = node->child;
 	child = child->brother;
-	semantic_DefList(child);
-	child = child->brother;
-	semantic_StmtList(child);
+	if(child != NULL && child->tokentype == _DefList){
+		semantic_DefList(child);
+		child = child->brother;
+	}
+	if(child != NULL && child->tokentype != _RC)
+		semantic_StmtList(child);
 }
 
 void semantic_DefList(struct Node *node){
 	if(node == NULL || node->tokentype != _DefList){
 		printf("the node is not a DefList\n");
+		if(node != NULL)
+			printf("the node is %s\n", node->name);
 		return;
 	}
 	struct Node *child = node->child;
-	semantic_Def(child);
-	child = child->brother;
-	if(child != NULL)
-		semantic_DefList(child);
+	if(child != NULL){
+		semantic_Def(child);
+		child = child->brother;
+		if(child != NULL)
+			semantic_DefList(child);
+	}
 }
 
 void semantic_StmtList(struct Node *node){
 	if(node == NULL || node->tokentype != _StmtList){
 		printf("the node is not a StmtList\n");
+		if(node != NULL)
+			printf("node is %s\n", node->name);
 		return;
 	}
 	struct Node *child = node->child;
-	semantic_Stmt(child);
-	child = child->brother;
-	if(child != NULL)
-		semantic_StmtList(child);
+	if(child != NULL){
+		semantic_Stmt(child);
+		child = child->brother;
+		if(child != NULL)
+			semantic_StmtList(child);
+	}
 }
 
 void semantic_Stmt(struct Node *node){
@@ -252,8 +302,16 @@ void semantic_Stmt(struct Node *node){
 		enum VarType exptype;
 		semantic_Exp(&left, child, &exptype);
 	}
-	else if(child->tokentype == _CompSt)
+	else if(child->tokentype == _CompSt){
+		symstack[++stackindex] = NULL;
 		semantic_CompSt(child);
+		symnode_t *temp = symstack[stackindex];
+		while(temp != NULL){
+			temp->layer = -1;
+			temp = temp ->layernext;
+		}
+		stackindex --;
+	}
 	else if(child->tokentype == _RETURN){
 		int left;
 		enum VarType retype;
@@ -285,8 +343,8 @@ void semantic_Stmt(struct Node *node){
 
 }
 void semantic_Def(struct Node *node){
-	if(node != NULL || node->tokentype != _Def){
-		printf("the node is not a Def\n");
+	if(node == NULL || node->tokentype != _Def){
+		printf("the node is not a Def\n");	
 		return;
 	}
 	struct Node *child = node->child;
@@ -322,6 +380,10 @@ void semantic_Dec(struct Node *node, enum VarType basetype, struct Structure *st
 	enum VarType exptype;
 	union Varp vp;
 	if(child != NULL){
+		if(structlayer > 0){
+			printf("Error type 15 at Line %d:initialze filed when Structure define\n", child->lineno);
+			return;
+		}
 		child = child->brother;
 		int c ;
 		vp = semantic_Exp(&c, child, &exptype);	
@@ -361,11 +423,16 @@ union Varp semantic_Exp(int *leftorright, struct Node *node, enum VarType *type)
 		}else if(child->tokentype == _LB){//array 
 			if(etp != V_ARRAY){
 				printf("Error type 10 at Line %d:the exp is not an array\n", child->lineno);
+				*type = V_ERROR;
+				*leftorright = -1;
+				union Varp r;
+				r.sp = NULL;
+				return r;
 			}
 			child = child->brother;
 			enum VarType indextype;
 			semantic_Exp(&left, child, &indextype);
-			if(indextype != _INT){
+			if(indextype != V_INT){
 				printf("Error type 12 at Line %d:the array's index is not an int\n", child->lineno);
 			}
 			*leftorright = 1;//array has left value
@@ -379,8 +446,14 @@ union Varp semantic_Exp(int *leftorright, struct Node *node, enum VarType *type)
 		}else if(child->tokentype == _DOT){//struct
 			enum VarType dottype;
 			child = child->brother;
-			if(etp != V_STRUCT)
+			if(etp != V_STRUCT){
 				printf("Error type 13 at Line %d:use Dot with a var isn't a structure\n", child->lineno);
+				*type = V_ERROR;
+				*leftorright = -1;
+				union Varp v ;
+				v.sp = NULL;
+				return v;
+			}
 			union Varp dotvp = getStructureMem(et.sp, child, &dottype);
 			if(dottype == V_ERROR)
 				printf("Error type 14 at Line %d:the struct don't have the menber wanted\n", child->lineno);
@@ -391,8 +464,8 @@ union Varp semantic_Exp(int *leftorright, struct Node *node, enum VarType *type)
 			child = child->brother;
 			enum VarType sectype;
 			semantic_Exp(&left, child, &sectype);
-			if(sectype != etp || sectype == V_STRUCT || sectype == V_ARRAY\
-					|| sectype == V_ERROR || etp == V_STRUCT || etp == V_ARRAY || etp == V_ERROR){
+			if(sectype != V_ERROR && etp != V_ERROR && (sectype != etp || sectype == V_STRUCT || sectype == V_ARRAY\
+					 || etp == V_STRUCT || etp == V_ARRAY)){// V_ERROR 布报本错误,因为这是其他错误引起的
 				printf("Error type 7 at Line %d:oprator cant match\n", child->lineno);
 			}
 			*leftorright = -1;//op exp didn't have left value
@@ -408,7 +481,7 @@ union Varp semantic_Exp(int *leftorright, struct Node *node, enum VarType *type)
 			*leftorright = 1;
 			union Varp revp =  getVar(child, type);
 			if(*type == V_ERROR)
-				printf("Error type 1 at Line %d: use od var didn't dec\n", child->lineno);
+				printf("Error type 1 at Line %d: use old var didn't dec\n", child->lineno);
 			return revp;
 		}
 		child = child->brother;
@@ -417,9 +490,9 @@ union Varp semantic_Exp(int *leftorright, struct Node *node, enum VarType *type)
 			enum VarType maybevartype;
 			getVar(node->child, &maybevartype);
 			if(maybevartype == V_ERROR)
-				printf("Error type 11 at Line %d:call a function didn't exist\n", child->lineno);
+				printf("Error type 2 at Line %d:call a function didn't exist\n", child->lineno);
 			else
-				printf("Error type 2 at Line %d:call a varibale as a function\n", child->lineno);
+				printf("Error type 11 at Line %d:call a varibale as a function\n", child->lineno);
 
 		}else{
 			struct ParList * arg = NULL;
@@ -458,7 +531,9 @@ union Varp semantic_Exp(int *leftorright, struct Node *node, enum VarType *type)
 		re.sp = NULL;
 		return	re;
 	}
-	
+	union Varp r;
+	r.sp = NULL;
+	return r;
 }
 
 struct ParList * semantic_Args(struct Node *node){
@@ -484,27 +559,375 @@ struct ParList * semantic_Args(struct Node *node){
 }
 
 unsigned int makehash(char * name){
-	int len = strlen(name);
-	unsigned int *p = (unsigned int*)name;
-	int i = 0;
-	unsigned int sum = 0;
-	while(i < len){
-		sum += *p;
-		p ++;
-		i += sizeof(unsigned int);
+	//use SDB hash
+	unsigned int hash = 0;
+	while (*name){ // equivalent to: hash = 65599*hash + (*str++);
+		hash = (*name++) + (hash << 6) + (hash << 16) - hash;	             
 	}
-	if(i != len){
-		unsigned char * cp =(unsigned char *)(p - 1);
-		i -= sizeof(int);
-		while(i < len){
-			sum += *cp;
-			i++;
-			cp++;
-		}
-	}
-	return sum % HASHLEN;
+	return (hash & 0x7FFFFFFF) % HASHLEN;
 }
 
 struct VariMsg *newVar(struct Node *node, enum VarType basetype, union Varp vp){
-	
+	if(node == NULL || node->tokentype != _ID){
+		printf("the node is not a ID\n");
+		return NULL;
+	}
+	unsigned int hash = makehash(node->name);
+	symnode_t * temp = symtable[hash];
+	while(temp != NULL){
+		if(temp->smb.symtype == S_VARI){
+			if(temp->layer == stackindex && strcmp(temp->smb.msgp.vmsgp->name, node->name) == 0){
+				//报错.相同作用域下有同名变量
+				if(structlayer > 0)
+					printf("Error type 15 at Line %d:redefind field, old define at line %d\n", node->lineno, temp->smb.lineNumber);
+				else
+					printf("Error type 3 at Line %d:conflict type, old define at line %d \n", node->lineno, temp->smb.lineNumber);
+				return NULL;
+			}
+		}
+		temp = temp->next;
+	}
+	//if not return then can crate a new node
+	symnode_t * newvarnode = malloc(sizeof(symnode_t));
+	newvarnode->layer = stackindex;
+	newvarnode->layernext = NULL;
+	newvarnode->next = NULL;
+	if(symtable[hash] != NULL)
+		newvarnode->next = symtable[hash]->next;
+	symtable[hash] = newvarnode;
+	if(symstack[stackindex] == NULL){
+		symstack[stackindex] = newvarnode;
+		currenttail = newvarnode;
+	}else
+		currenttail->layernext = newvarnode;
+	newvarnode->smb.symtype = S_VARI;
+	newvarnode->smb.visitedTag = 1;
+	newvarnode->smb.lineNumber = node->lineno;
+	newvarnode->smb.msgp.vmsgp = malloc(sizeof(struct VariMsg));
+	newvarnode->smb.msgp.vmsgp->name = node->name;
+	newvarnode->smb.msgp.vmsgp->type = basetype;
+	newvarnode->smb.msgp.vmsgp->tp = vp;
+	return newvarnode->smb.msgp.vmsgp;
+}
+
+
+struct VariMsg *newArrayVar(struct Node *node, union Varp arraybase){
+	if(node == NULL || node->tokentype != _VarDec){
+		printf("the node is not a VarDec, @newArrayVar\n");
+		return NULL;
+	}
+	struct Node *child = node->child;
+	if(child->tokentype == _ID){
+		struct VariMsg * remsg = malloc(sizeof(struct VariMsg));
+		remsg->type = V_ARRAY;
+		remsg->name = child->name;
+	//	printf("array name is %s;\n", child->name);
+		remsg->tp = arraybase;
+		unsigned int hash = makehash(child->name);
+		symnode_t * temp = symtable[hash];
+		while(temp != NULL){
+			if(temp->smb.symtype == S_VARI){
+				if(temp->layer == stackindex && strcmp(temp->smb.msgp.vmsgp->name, child->name) == 0){
+					//报错.相同作用域下有同名变量
+					printf("Error type 3 at Line %d:conflict type, old define at line %d \n", child->lineno, temp->smb.lineNumber);
+					free(remsg);//清理
+					return NULL;
+				}
+			}
+			temp = temp->next;
+		}
+		//if not return then can crate a new node
+		symnode_t * newvarnode = malloc(sizeof(symnode_t));
+		newvarnode->layer = stackindex;
+		newvarnode->layernext = NULL;
+		newvarnode->next = NULL;
+		if(symtable[hash] != NULL)
+			newvarnode->next = symtable[hash]->next;
+		symtable[hash] = newvarnode;
+		if(symstack[stackindex] == NULL){
+			symstack[stackindex] = newvarnode;
+			currenttail = newvarnode;
+		}else
+			currenttail->layernext = newvarnode;
+		newvarnode->smb.symtype = S_VARI;
+		newvarnode->smb.visitedTag = 1;
+		newvarnode->smb.lineNumber = node->lineno;
+		newvarnode->smb.msgp.vmsgp = remsg;
+	//	printf("create a new array, name %s, hash %d\n",child->name, hash);
+		return newvarnode->smb.msgp.vmsgp;
+	}
+	else if(child->tokentype == _VarDec){	
+		union Varp arraybase;
+		arraybase.ap = malloc(sizeof(struct ArrayMsg));	
+		arraybase.ap->basetype = V_ARRAY;
+		arraybase.ap->base = arraybase;
+		arraybase.ap->size = getIntVal(child->brother->brother);
+		return newArrayVar(child, arraybase);//递归的搞定
+	}
+	return NULL;
+}
+
+int getIntVal(struct Node *node){
+	if(node == NULL || node->tokentype != _INT){
+		printf("the node is not a INT, @getIntVal\n");
+		return 0;
+	}
+	return atoi(node->name);
+}
+
+struct FuncMsg *newFunction(struct Node *node, enum VarType retype, struct Structure *restrp, struct ParList *args){
+	if(node == NULL || node->tokentype != _ID){
+		printf("the node is not a ID, @newFunction\n");
+		return NULL;
+	}
+	unsigned int hash = makehash(node->name);
+	funnode_t * temp = funtable[hash];
+	while(temp != NULL){
+		if(strcmp(temp->fun->name, node->name) == 0){
+			printf("Error type 4 at Line %d:has old define\n", node->lineno);
+			nowerror = 1;
+			break;//means redefine
+		}
+		temp = temp->next;
+	}
+	//means can new a new funtion
+	funnode_t * newfun = malloc(sizeof(funnode_t));
+	newfun->next = NULL;
+	newfun->fun = malloc(sizeof(struct FuncMsg));
+	newfun->fun->arglist = args;
+	newfun->fun->retype = retype;
+	newfun->fun->name = node->name;
+	newfun->fun->repointer.sp = restrp;
+	if(nowerror == 0){//没有出错时才将新函数添加到函数表
+		if(funtable[hash] != NULL)
+			newfun->next = funtable[hash]->next;
+		funtable[hash] = newfun;
+		return newfun->fun;
+	}else{
+		struct FuncMsg *tore = newfun->fun;
+		free(newfun);
+		return tore;
+	}
+	return NULL;
+}
+
+struct Structure *newStruct(struct Node *idnode, struct Node *node){
+	if(idnode == NULL){
+		stackindex ++;
+		structlayer ++;
+		symstack[stackindex] = NULL;
+		struct Structure * re = malloc(sizeof(struct Structure));
+		semantic_DefList(node);
+		re->name = NULL;//匿名结构体, 匿名结构体不存在同名关系	
+		re->memlist = symstack[stackindex];
+		symnode_t *tofree = symstack[stackindex];
+		while(tofree != NULL){
+			tofree->layer = -1;
+			tofree = tofree->layernext;
+		}
+		stackindex --;
+		structlayer --;
+		return re;
+	}
+	if(idnode->tokentype != _ID){
+		printf("the node is not a ID, @newStruct\n");
+		return NULL;
+	}
+	if(node == NULL || node->tokentype != _DefList){
+		printf("the node is not a DefList but a %s, @newStruct\n", node->name);
+		return NULL;
+	}
+	//先在struct表中查询struct 找到是否有struct同名
+	//然后解析其中的目
+	symtable[++stackindex] = NULL ;//一层作用域
+	unsigned int hash = makehash(idnode->name);
+	strnode_t * temp = strtable[hash];
+	int flag = 0;
+//	printf("newStruct\n");
+	while(temp != NULL){
+		if(strcmp(temp->str.name, idnode->name) == 0){
+			printf("Error type 16 at Line %d: has old define\n", idnode->lineno);
+			flag = 1;
+			break;
+		}	
+		temp = temp->next;
+	}
+	//printf("out of loop\n");
+	structlayer ++;
+	strnode_t *newstr = malloc(sizeof(strnode_t));
+	newstr->next = NULL;
+	newstr->str.name = idnode->name;
+	semantic_DefList(node);
+	newstr->str.memlist = symstack[stackindex];//当前作用域下生成的所有变量都是他的
+	symnode_t * tofree = symstack[stackindex];
+	structlayer --;
+	while(tofree != NULL){
+		tofree->layer = -1;//means free
+		tofree = tofree->layernext;
+	//	printf("tofree\n");
+	}
+	if(flag){
+		free(newstr);
+		newstr = NULL;
+		return NULL;
+	}
+	if(strtable[hash] != NULL){
+		newstr->next = strtable[hash]->next;
+	}
+	strtable[hash] = newstr;
+	return &(newstr->str);
+}
+
+struct Structure *getStructureByName(char *name){
+	if(name == NULL || strlen(name) == 0){
+		printf("the name is NULL\n");
+		return NULL;
+	}
+	unsigned int hash = makehash(name);
+	strnode_t * strtemp = strtable[hash];
+//	printf("get Structure by name\n");
+	while(strtemp != NULL){
+		if(strcmp(strtemp->str.name, name) == 0){
+			return &(strtemp->str);
+		}
+		strtemp = strtemp->next;	
+	}
+	return NULL;
+}
+
+
+union Varp getStructureMem(struct Structure *sp, struct Node *memnode, enum VarType *memtype){
+	if(sp == NULL || memnode == NULL || memnode->tokentype != _ID){
+		printf("use of getStructureMem error\n");
+		*memtype = V_ERROR;
+		union Varp r;
+		r.sp = NULL;
+		return r;
+	}
+	symnode_t * temp = sp->memlist;
+	while(temp != NULL){
+		if(strcmp(temp->smb.msgp.vmsgp->name, memnode->name) == 0){
+			if(temp->smb.symtype == S_VARI){
+				*memtype = temp->smb.msgp.vmsgp->type;
+				return temp->smb.msgp.vmsgp->tp;
+			}
+		}
+		temp = temp->layernext;
+	}
+	//cant find ,
+	*memtype = V_ERROR;
+	union Varp r;
+	r.sp = NULL;
+	return r;
+}
+
+union Varp getVar(struct Node *idnode, enum VarType *vtp){
+	if(idnode == NULL || idnode->tokentype != _ID){
+		printf("the node is not a ID\n");
+		*vtp = V_ERROR;
+		union Varp r;
+		r.sp =NULL;
+		return r;
+	}
+	unsigned int hash = makehash(idnode->name);
+//	printf("want name is %s, hash %d\n", idnode->name, hash);
+	symnode_t * temp = symtable[hash];
+	int maxlay = 0;
+	symnode_t * find = NULL;
+	while(temp != NULL){
+	//	printf("name is %s, want %s\n", temp->smb.msgp.vmsgp->name, idnode->name);
+		if(temp->smb.symtype == S_VARI && strcmp(temp->smb.msgp.vmsgp->name, idnode->name) == 0){	
+			if(temp->layer >= 0 && temp->layer >= maxlay){
+				find = temp;
+				maxlay = temp->layer;
+			}
+		}
+		temp = temp->next;
+	}
+	union Varp r;
+	if(find == NULL){
+		*vtp = V_ERROR;
+		r.sp = NULL;
+	}
+	else{
+		*vtp = find->smb.msgp.vmsgp->type;
+		r = find->smb.msgp.vmsgp->tp;
+	//	printf("find Var name is %s\n", r);
+	}
+	return r;
+}
+
+struct FuncMsg * getFuncMsg(struct Node *node){
+	if(node == NULL || node->tokentype != _ID){
+		printf("the node is not a ID, @getFuncMsg\n");
+		return NULL;
+	}
+	unsigned int hash = makehash(node->name);
+	funnode_t * temp = funtable[hash];
+	while(temp != NULL){
+		if(strcmp(temp->fun->name, node->name) == 0){
+			return temp->fun;
+		}
+		temp = temp->next;
+	}
+	return NULL;
+}
+
+int checkAssignType(enum VarType lefttype, union Varp leftvp, enum VarType righttype, union Varp rightvp){
+	if(lefttype != righttype || lefttype == V_ERROR || righttype == V_ERROR){
+		return -1;
+	}
+	if(lefttype == V_ARRAY){
+		return checkAssignType(leftvp.ap->basetype, leftvp.ap->base, rightvp.ap->basetype, rightvp.ap->base);
+	}
+	if(lefttype == V_STRUCT){
+		symnode_t *temp1 = leftvp.sp->memlist;
+		symnode_t *temp2 = rightvp.sp->memlist;
+	/*	symnode_t *t1 = temp1;
+		symnode_t *t2 = temp2;
+		while(t1 != NULL){
+			printf("t1 .member :%s\n", t1->smb.msgp.vmsgp->name);
+			t1 = t1->layernext;
+		}
+		while(t2 != NULL){
+			printf("t2 .member :%s\n", t2->smb.msgp.vmsgp->name);
+			t2 = t2->layernext;
+		}*/
+		while(temp1 != NULL && temp2 != NULL){
+			int rc = checkAssignType(temp1->smb.msgp.vmsgp->type, temp1->smb.msgp.vmsgp->tp, temp2->smb.msgp.vmsgp->type, temp2->smb.msgp.vmsgp->tp);
+			if(rc < 0){
+		//		printf("t1 name %s ,t2 name %s\n", temp1->smb.msgp.vmsgp->name, temp2->smb.msgp.vmsgp->name);
+		//		printf("t1.x != t2.x\n");
+				return -1;
+			}
+	//			printf("t1 name %s ,t2 name %s\n", temp1->smb.msgp.vmsgp->name, temp2->smb.msgp.vmsgp->name);
+	//		printf("t1.x ==  t2.x\n");
+			temp1 = temp1->layernext;
+			temp2 = temp2->layernext;
+		}
+		if(temp1 != NULL || temp2 != NULL){
+	//		printf("t1.len != t2.len\n");
+	//		printf("t1layer %d, name %s\n", temp1->layer, temp1->smb.msgp.vmsgp->name);
+	//		printf("t1.p %ld, t2.d %ld\n", temp1, temp2);
+			return -1;
+		}
+	}
+//	printf("t1 == t2\n");
+	return 1;
+}
+
+int checkArg(struct FuncMsg *fc, struct ParList *arg){
+	if(fc == NULL)
+		return -1;
+	struct ParList *fcargs = fc->arglist;
+	while(fcargs != NULL && arg != NULL){
+		int rc = checkAssignType(fcargs->partype, fcargs->parpointer, arg->partype, arg->parpointer);
+		if(rc < 0)
+			return -1;
+		fcargs = fcargs->next;
+		arg = arg->next;
+	}
+	if(fcargs != NULL || arg != NULL)
+		return -1;
+	return 1;
 }

@@ -20,7 +20,7 @@ struct ParList{
 };
 struct Structure{
 	char *name;
-	struct ParList *parlist;
+	struct symbolHashNode *memlist;
 };
 struct ArrayMsg{
 	int size;//array size
@@ -52,7 +52,9 @@ struct Symbol{
 
 typedef struct symbolHashNode{
 	struct Symbol smb;
+	int layer;
 	struct symbolHashNode *next;
+	struct symbolHashNode *layernext;
 }symnode_t;
 typedef struct structureHashNode{
 	struct Structure str;
@@ -60,7 +62,7 @@ typedef struct structureHashNode{
 }strnode_t;
 typedef struct functionHashNode{
 	struct FuncMsg *fun;//point to the symbol in symboltable
-	struct functionHahsNode *next;
+	struct functionHashNode *next;
 }funnode_t;
 extern void inittables();
 extern void semantic();

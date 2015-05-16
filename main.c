@@ -1,6 +1,7 @@
 #include<stdio.h>
 #include"lexical.h"
 #include"syntax-analyzer.tab.h"
+#include"semantic.h"
 extern int yyrestart(FILE *);
 struct Node *root;
 int haserror;
@@ -22,6 +23,7 @@ int main(int argc, char **argv){
 		yyparse();
 		if(haserror == 0){
 			printTree(root, 0);
+			semantic();
 		}
 		destroyTree(root);
 		close(f);
