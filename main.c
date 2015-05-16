@@ -10,7 +10,7 @@ int main(int argc, char **argv){
 		return -1;
 	int i = 1;
 	for(i = 1; i < argc; i ++){
-		printf("\n\ntesting:%s\n", argv[i]);
+//		printf("\n\ntesting:%s\n", argv[i]);
 		FILE *f = fopen(argv[i], "r");
 		if(!f){
 			perror("file not found\n" );
@@ -22,8 +22,9 @@ int main(int argc, char **argv){
 		yyrestart(f);
 		yyparse();
 		if(haserror == 0){
-			printTree(root, 0);
+		//	printTree(root, 0);
 			semantic();
+			printf("\n");
 		}
 		destroyTree(root);
 		close(f);

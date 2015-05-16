@@ -30,7 +30,8 @@ struct ArrayMsg{
 };
 struct FuncMsg{
 	char *name;
-	enum VarType retype; 
+	enum VarType retype;
+	int dord;
 	union Varp repointer;//if retype is not int or float then this pointer point to the type(maybe an array or a structure)
 	struct ParList *arglist;
 };
@@ -66,12 +67,13 @@ typedef struct functionHashNode{
 }funnode_t;
 extern void inittables();
 extern void semantic();
+extern void checkNoDeFun();
 extern void semantic_program(struct Node *node);
 extern void semantic_ExtDefList(struct Node *node);
 extern void semantic_ExtDef(struct Node *node);
 extern struct Structure* semantic_Specifier(struct Node *node, enum VarType *basetype);
 extern void semantic_ExtDecList(struct Node *node, enum VarType basetype, struct Structure *strp);
-extern void semantic_FunDec(struct Node *node, enum VarType, struct Structure *strp);
+extern void semantic_FunDec(struct Node *node, enum VarType, struct Structure *strp, int dord);
 extern void semantic_CompSt(struct Node *node);
 extern struct Structure *semantic_StructSpecifier(struct Node *node, enum VarType *basetype);
 extern struct VariMsg * semantic_VarDec(struct Node *node, enum VarType basetype, struct Structure *strp);
@@ -93,7 +95,7 @@ extern struct Structure * getStructureByName(char *name);
 extern struct Structure * newStruct(struct Node *idnode, struct Node *node);
 extern struct VariMsg * newVar(struct Node *node, enum VarType basetype, union Varp vtp);
 extern struct VariMsg * newArrayVar(struct Node *node, union Varp arraybase);
-extern struct FuncMsg * newFunction(struct Node *idnode, enum VarType retype, struct Structure *restrp, struct ParList *args); 
+extern struct FuncMsg * newFunction(struct Node *idnode, enum VarType retype, struct Structure *restrp, struct ParList *args, int dord); 
 extern int getIntVal(struct Node *intnode);
 extern int checkAssignType(enum VarType lefttype, union Varp leftp, enum VarType righttype, union Varp rightp);
 extern union Varp getVar(struct Node *idnode, enum VarType *vtp);

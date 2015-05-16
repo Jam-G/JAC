@@ -43,6 +43,10 @@ ExtDef:Specifier ExtDecList SEMI{
 	$$=createNode(@$.first_line, NOTEND, _ExtDef, "ExtDef");
 	addChild($$, 3, $1, $2, $3);
 }
+	|Specifier FunDec SEMI{
+	$$=createNode(@$.first_line, NOTEND, _ExtDef, "ExtDef");
+	addChild($$, 3, $1, $2, $3);
+}
 	| error SEMI{printf("Define Missing ';' before column:%d  ", @$.first_column);};
 ExtDecList:VarDec{
 	$$=createNode(@$.first_line, NOTEND, _ExtDecList, "ExtDecList");

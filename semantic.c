@@ -20,6 +20,19 @@ int stackindex = 0;
 void semantic(){
 	inittables();
 	semantic_program(root);
+	checkNoDeFun();//最后检查只有声明没有定义的函数
+}
+void checkNoDeFun(){
+	int i = 0;
+	for(i = 0; i < HASHLEN; i ++){
+		funnode_t * temp = funtable[i];
+		while(temp != NULL){
+			if(temp->fun->dord < 0){
+				printf("Error type 18 at Line %d:undefined function \"%s\"\n", 0 - temp->fun->dord, temp->fun->name);
+			}
+			temp = temp->next;
+		}
+	}
 }
 
 void inittables()
@@ -80,9 +93,13 @@ void semantic_ExtDef(struct Node *node){
 		//encounter ;, need to do nothing, 
 		;
 	}else if(child->tokentype == _FunDec){
-		semantic_FunDec(child, type, strp);
+		if(child->brother->tokentype == _CompSt)//函数定义
+			semantic_FunDec(child, type, strp, child->lineno);
+		else//函数声明
+			semantic_FunDec(child, type, strp, 0 - child->lineno);
 		child = child->brother;
-		semantic_CompSt(child);
+		if(child ->tokentype == _CompSt)
+			semantic_CompSt(child);
 		symnode_t *temp = symstack[stackindex];
 		while(temp != NULL){
 			temp->layer = -1;
@@ -188,7 +205,7 @@ struct VariMsg * semantic_VarDec(struct Node *node, enum VarType basetype, struc
 	return NULL;
 }
 
-void semantic_FunDec(struct Node *node, enum VarType retype, struct Structure *strp){
+void semantic_FunDec(struct Node *node, enum VarType retype, struct Structure *strp, int dord){
 	if(node == NULL || node->tokentype != _FunDec){
 		printf("the node is not a FunDec\n");
 		return;
@@ -205,7 +222,7 @@ void semantic_FunDec(struct Node *node, enum VarType retype, struct Structure *s
 		free(nowFunc);
 		nowerror = 0;//恢复无错情况
 	}
-	nowFunc = newFunction(child, retype, strp, args);
+	nowFunc = newFunction(child, retype, strp, args, dord);
 }
 
 struct ParList* semantic_VarList(struct Node *node){
@@ -387,7 +404,7 @@ void semantic_Dec(struct Node *node, enum VarType basetype, struct Structure *st
 		child = child->brother;
 		int c ;
 		vp = semantic_Exp(&c, child, &exptype);	
-		if(checkAssignType(left->type, left->tp, exptype, vp) < 0){
+		if(exptype != V_ERROR && basetype != V_ERROR && checkAssignType(left->type, left->tp, exptype, vp) < 0){
 			printf("Error type 5 at Line %d:left and right type can't match\n", child->lineno);
 		}
 	}
@@ -414,7 +431,7 @@ union Varp semantic_Exp(int *leftorright, struct Node *node, enum VarType *type)
 			child = child->brother;
 			enum VarType rightetp;
 			union Varp rightrt = semantic_Exp(&left, child, &rightetp);
-			if(checkAssignType(etp, et, rightetp, rightrt) < 0){
+			if(etp != V_ERROR && rightetp != V_ERROR && checkAssignType(etp, et, rightetp, rightrt) < 0){
 				printf("Error type 5 at Line %d:left and right type can't match\n", child->lineno);
 			}
 			*leftorright = -1;//assign exp dont have left value
@@ -675,7 +692,7 @@ int getIntVal(struct Node *node){
 	return atoi(node->name);
 }
 
-struct FuncMsg *newFunction(struct Node *node, enum VarType retype, struct Structure *restrp, struct ParList *args){
+struct FuncMsg *newFunction(struct Node *node, enum VarType retype, struct Structure *restrp, struct ParList *args, int dord){
 	if(node == NULL || node->tokentype != _ID){
 		printf("the node is not a ID, @newFunction\n");
 		return NULL;
@@ -684,6 +701,20 @@ struct FuncMsg *newFunction(struct Node *node, enum VarType retype, struct Struc
 	funnode_t * temp = funtable[hash];
 	while(temp != NULL){
 		if(strcmp(temp->fun->name, node->name) == 0){
+			union Varp restrpvp;
+			restrpvp.sp = restrp;
+			if(dord < 0 || temp->fun->dord < 0){//两次至少一次是声明
+				if(checkAssignType(temp->fun->retype, temp->fun->repointer, retype, restrpvp) < 0 || checkArg(temp->fun, args) < 0){
+					printf("Error type 19 at Line %d:conflict function\n", node->lineno);
+					nowerror = 1;
+					break;
+				}
+				// 如果一致则返回
+				// 并且如果本次是定义,则修改函数信息为定义过
+				if(dord > 0)
+					temp->fun->dord = dord;
+				return temp->fun;
+			}
 			printf("Error type 4 at Line %d:has old define\n", node->lineno);
 			nowerror = 1;
 			break;//means redefine
@@ -698,6 +729,7 @@ struct FuncMsg *newFunction(struct Node *node, enum VarType retype, struct Struc
 	newfun->fun->retype = retype;
 	newfun->fun->name = node->name;
 	newfun->fun->repointer.sp = restrp;
+	newfun->fun->dord = dord;
 	if(nowerror == 0){//没有出错时才将新函数添加到函数表
 		if(funtable[hash] != NULL)
 			newfun->next = funtable[hash]->next;
