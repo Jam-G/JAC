@@ -15,6 +15,6 @@ clean :
 	rm -f syntax-analyzer.tab.*
 	rm -f parser
 	rm -f *.output	
-debug:flex bisondebug parser
-testall:
-	./parser *.cmm	
+debug:
+	gcc main.c syntax-analyzer.tab.c lexical.c semantic.h semantic.c intercode.c -Wall -lfl -ly -g -o parser
+

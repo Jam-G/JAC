@@ -664,12 +664,17 @@ InterCodes translate_Cond(struct Node * node, Operand label_true, Operand label_
 }
 
 InterCodes translate_Compst(struct Node * node) {
-	InterCodes code1, code2;
+	InterCodes code1 = NULL, code2 = NULL;
 	struct Node * child = node->child;
 	assert(child != NULL);
 	//LC DefList StmtList RC
-	code1 = translate_Deflist(child->brother);
-	code2 = translate_Stmtlist(child->brother->brother);
+	child = child->brother;
+	if(child != NULL && child->tokentype == _DefList){
+		code1 = translate_Deflist(child);
+		child = child->brother;
+	}
+	if(child != NULL && child->tokentype != _RC)
+		code2 = translate_Stmtlist(child);
 	code1 = link_ir(code1, code2);
 	return code1;
 }
@@ -867,8 +872,10 @@ InterCodes translate_Deflist(struct Node * node) {
 
 InterCodes translate_Def(struct Node * node) {
 	struct Node * child = node->child;
+//	printf("translate_Def:%s\n", node->name);
 	assert(child != NULL);
 	//Specifier DecList SEMI
+//	printf("translate_Def: to declist %s\n", child->brother->name);
 	return translate_Declist(child->brother);
 }
 

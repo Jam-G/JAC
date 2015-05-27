@@ -9,7 +9,7 @@
 symnode_t *symtable[HASHLEN];
 strnode_t *strtable[HASHLEN];
 funnode_t *funtable[HASHLEN];
-
+int vaCount = 0;
 struct FuncMsg * nowFunc;
 int nowerror = 0;
 int structlayer = 0; 
@@ -276,7 +276,10 @@ void semantic_ParamDec(struct Node *node, enum VarType *type, union Varp *vp, ch
 	child = child->brother;
 	struct VariMsg * varp = semantic_VarDec(child, spectype, strp);
 	*name = varp->name;
-	assert(varp->type == spectype);
+//	if(varp->type != spectype){
+//		printf("varp type is %d, spectype %d\n", varp->type, spectype);
+//	}
+//	assert(varp->type == spectype);
 }
 
 
@@ -607,7 +610,6 @@ unsigned int makehash(char * name){
 }
 
 struct VariMsg *newVar(struct Node *node, enum VarType basetype, union Varp vp){
-	static int vaCount = 0;
 	if(node == NULL || node->tokentype != _ID){
 		printf("the node is not a ID\n");
 		return NULL;
@@ -659,9 +661,10 @@ struct VariMsg *newArrayVar(struct Node *node, union Varp arraybase){
 	}
 	struct Node *child = node->child;
 	if(child->tokentype == _ID){
-		struct VariMsg * remsg = malloc(sizeof(struct VariMsg));
+		struct VariMsg * remsg = (struct VariMsg*)malloc(sizeof(struct VariMsg));
 		remsg->type = V_ARRAY;
 		remsg->name = child->name;
+		remsg->var_no = vaCount++;
 	//	printf("array name is %s;\n", child->name);
 		remsg->tp = arraybase;
 		unsigned int hash = makehash(child->name);
