@@ -7,8 +7,8 @@ bisondebug:syntax-analyzer.y
 	bison -d -t -v syntax-analyzer.y
 bison:syntax-analyzer.y
 	bison -d -t syntax-analyzer.y
-parser:main.c syntax-analyzer.tab.c syntax-analyzer.tab.h lexical.c lexical.h lex.yy.c semantic.h semantic.c
-	gcc main.c syntax-analyzer.tab.c lexical.c semantic.h semantic.c -Wall -lfl -ly -o parser
+parser:main.c syntax-analyzer.tab.c syntax-analyzer.tab.h lexical.c lexical.h lex.yy.c semantic.h semantic.c intercode.c intercode.h
+	gcc main.c syntax-analyzer.tab.c lexical.c semantic.h semantic.c intercode.c -Wall -lfl -ly -o parser
 .PHONY:clean debug test testall testac
 clean :
 	rm -f lex.yy.c

@@ -17,8 +17,27 @@ int structlayer = 0;
 symnode_t* symstack[STACKLEN];
 symnode_t* currenttail;//当前作用域的尾节点
 int stackindex = 0;
+
+void add_read_write(){
+	struct Node node;
+	node.name = "read";
+	node.lineno = 0;
+	node.type = NOTEND;
+	node.tokentype = _ID;
+	node.child = NULL;
+	node.brother = NULL;
+	enum VarType retype;
+	retype = V_INT;
+	newFunction(&node, retype, NULL, NULL, 1);
+	node.name = "write";
+	struct ParList *p = (struct ParList *)malloc(sizeof(struct ParList));
+	p->next = NULL;
+	p->partype = V_INT;	
+	newFunction(&node, retype, NULL, p, 1);	
+}
 void semantic(){
 	inittables();
+	add_read_write();
 	semantic_program(root);
 	checkNoDeFun();//最后检查只有声明没有定义的函数
 }
@@ -512,9 +531,10 @@ union Varp semantic_Exp(int *leftorright, struct Node *node, enum VarType *type)
 				printf("Error type 11 at Line %d:call a varibale as a function\n", child->lineno);
 
 		}else{
-			struct ParList * arg = NULL;
-			if(child->tokentype == _Args){
+			struct ParList * arg = NULL;		
+			if(child->brother->tokentype == _Args){
 				arg = semantic_Args(child->brother);
+			//	printf("is arg is NULL ? %d\n", arg == NULL);
 			}
 			if(checkArg(fc, arg) < 0)
 				printf("Error type 9 at Line %d:call a function the argscant match\n", child->lineno);
@@ -565,7 +585,9 @@ struct ParList * semantic_Args(struct Node *node){
 	struct ParList *the = malloc(sizeof(struct ParList));
 	the->partype = exptype;
 	the->parpointer = vp;
-	the->name = NULL;
+//	printf("vp is int ? %d ", exptype == V_INT);
+//	printf("is error ? %d\n", exptype == V_ERROR);
+	the->name = node->name;
 	the->next = NULL;
 	child = child->brother;
 	if(child != NULL){
@@ -585,6 +607,7 @@ unsigned int makehash(char * name){
 }
 
 struct VariMsg *newVar(struct Node *node, enum VarType basetype, union Varp vp){
+	static int vaCount = 0;
 	if(node == NULL || node->tokentype != _ID){
 		printf("the node is not a ID\n");
 		return NULL;
@@ -605,7 +628,7 @@ struct VariMsg *newVar(struct Node *node, enum VarType basetype, union Varp vp){
 		temp = temp->next;
 	}
 	//if not return then can crate a new node
-	symnode_t * newvarnode = malloc(sizeof(symnode_t));
+	symnode_t * newvarnode =(symnode_t*) malloc(sizeof(symnode_t));
 	newvarnode->layer = stackindex;
 	newvarnode->layernext = NULL;
 	newvarnode->next = NULL;
@@ -622,6 +645,7 @@ struct VariMsg *newVar(struct Node *node, enum VarType basetype, union Varp vp){
 	newvarnode->smb.lineNumber = node->lineno;
 	newvarnode->smb.msgp.vmsgp = malloc(sizeof(struct VariMsg));
 	newvarnode->smb.msgp.vmsgp->name = node->name;
+	newvarnode->smb.msgp.vmsgp->var_no = vaCount ++;
 	newvarnode->smb.msgp.vmsgp->type = basetype;
 	newvarnode->smb.msgp.vmsgp->tp = vp;
 	return newvarnode->smb.msgp.vmsgp;
@@ -869,7 +893,7 @@ union Varp getVar(struct Node *idnode, enum VarType *vtp){
 	while(temp != NULL){
 	//	printf("name is %s, want %s\n", temp->smb.msgp.vmsgp->name, idnode->name);
 		if(temp->smb.symtype == S_VARI && strcmp(temp->smb.msgp.vmsgp->name, idnode->name) == 0){	
-			if(temp->layer >= 0 && temp->layer >= maxlay){
+			if(1 || (temp->layer >= 0 && temp->layer >= maxlay)){
 				find = temp;
 				maxlay = temp->layer;
 			}
@@ -888,7 +912,44 @@ union Varp getVar(struct Node *idnode, enum VarType *vtp){
 	}
 	return r;
 }
+int getVarID(struct Node *idnode){
+	if(idnode == NULL || idnode->tokentype != _ID){
+		printf("the node is not a ID\n");		
+		return -1;
+	}
+	unsigned int hash = makehash(idnode->name);
+//	printf("want name is %s, hash %d\n", idnode->name, hash);
+	symnode_t * temp = symtable[hash];
+	int maxlay = 0;	
+	while(temp != NULL){
+	//	printf("name is %s, want %s\n", temp->smb.msgp.vmsgp->name, idnode->name);
+		if(temp->smb.symtype == S_VARI && strcmp(temp->smb.msgp.vmsgp->name, idnode->name) == 0){	
+			return temp->smb.msgp.vmsgp->var_no;	
+		}
+		temp = temp->next;
+	}
+	return -1;
 
+}
+int getVarIDbyName(char*name){
+	if(name == NULL || strlen(name) == 0){
+		printf("getVarIDbyName, but name is empty\n");
+		return -1;
+	}
+
+	unsigned int hash = makehash(name);
+//	printf("want name is %s, hash %d\n", idnode->name, hash);
+	symnode_t * temp = symtable[hash];
+	int maxlay = 0;	
+	while(temp != NULL){
+	//	printf("name is %s, want %s\n", temp->smb.msgp.vmsgp->name, idnode->name);
+		if(temp->smb.symtype == S_VARI && strcmp(temp->smb.msgp.vmsgp->name, name) == 0){	
+			return temp->smb.msgp.vmsgp->var_no;
+		}
+		temp = temp->next;
+	}
+	return -1;
+}
 struct FuncMsg * getFuncMsg(struct Node *node){
 	if(node == NULL || node->tokentype != _ID){
 		printf("the node is not a ID, @getFuncMsg\n");
@@ -906,6 +967,8 @@ struct FuncMsg * getFuncMsg(struct Node *node){
 }
 
 int checkAssignType(enum VarType lefttype, union Varp leftvp, enum VarType righttype, union Varp rightvp){
+
+//	printf("checkArg : left %d, right %d\n", lefttype == V_INT, righttype == V_INT);
 	if(lefttype != righttype || lefttype == V_ERROR || righttype == V_ERROR){
 		return -1;
 	}
@@ -959,6 +1022,7 @@ int checkArg(struct FuncMsg *fc, struct ParList *arg){
 		fcargs = fcargs->next;
 		arg = arg->next;
 	}
+//	printf("fcargs %d, arg %d\n", fcargs, arg);
 	if(fcargs != NULL || arg != NULL)
 		return -1;
 	return 1;

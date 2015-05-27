@@ -37,6 +37,7 @@ struct FuncMsg{
 };
 struct VariMsg{
 	char *name;
+	int var_no; //for lab3
 	enum VarType type;//int or float or struct or array
 	union Varp tp;//type pointer, point to the type of this variable if it not the basis type (int or float)
 };
@@ -103,4 +104,7 @@ extern union Varp getStructureMem(struct Structure * sp, struct Node *memnode, e
 extern struct FuncMsg *getFuncMsg(struct Node *node);
 extern int checkArg(struct FuncMsg *fc, struct ParList *arg);
 extern unsigned int makehash(char *name);
+extern int getVarID(struct Node *node);
+extern int getVarIDbyName(char *name);
+extern void add_read_write();
 #endif
