@@ -82,7 +82,7 @@ int main(int argc, char **argv){
 		yyrestart(f);
 		yyparse();
 		if(haserror == 0){
-			printTree(root, 0);
+		//	printTree(root, 0);
 			semantic();
 			traverse(&gen_ir, root, 0);
 			optimize_ir(&irtable);
