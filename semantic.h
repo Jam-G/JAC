@@ -55,6 +55,7 @@ struct Symbol{
 typedef struct symbolHashNode{
 	struct Symbol smb;
 	int layer;
+	int flag;
 	struct symbolHashNode *next;
 	struct symbolHashNode *layernext;
 }symnode_t;
@@ -106,5 +107,6 @@ extern int checkArg(struct FuncMsg *fc, struct ParList *arg);
 extern unsigned int makehash(char *name);
 extern int getVarID(struct Node *node);
 extern int getVarIDbyName(char *name);
+extern int getFlag(char *name);
 extern void add_read_write();
 #endif

@@ -1,10 +1,20 @@
+struct A{
+	int dota;
+	int dotb;
+};
 int fa(int a){
 	write(a);
+	return 1;
 }
-
+int fb(struct A c){
+	write(c.dota);
+	return 2;
+}
 int main(){
-	int array[10];
+	int array[2];
 	int n, nk;
+	struct A sa;
+	sa.dota = 10;
 	n = read();
 	nk = 2;
 	n = n - nk;
@@ -16,5 +26,6 @@ int main(){
 		write(0);
 	array[0] = 2;
 	fa(array[0]);
+	fb(sa);
 	return 0;
 }

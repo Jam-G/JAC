@@ -931,6 +931,7 @@ InterCodes translate_structure(struct Node * node, Operand place, symnode_t **li
 		int id = getVarID(child->child);
 		enum VarType vtp;
 		union Varp vp = getVar(child->child, &vtp);
+		int flag =  getFlag(child->child->name);
 		char *member_name = child->brother->brother->name;
 		symnode_t * member = vp.sp->memlist;
 		while(member != NULL){
@@ -942,8 +943,11 @@ InterCodes translate_structure(struct Node * node, Operand place, symnode_t **li
 		assert(member != NULL);
 		if(list != NULL)
 			*list = member;
-		Operand r1;		
-		r1 = new_variable(id);
+		Operand r1;	
+		if(flag == 1)
+			r1 = new_variable(id);
+		else
+			r1 = new_reference(id);
 		//printf("%s\n", id_node->name);
 		Operand c1 = new_constant(offset); 
 		Operand t1 = new_temp_id(place->u.temp_no);
@@ -1017,8 +1021,12 @@ InterCodes translate_array(struct Node * node, Operand place, union Varp *list, 
 	Operand t1;
 	//ID[Exp]
 	if(child->child->tokentype == _ID){
-		int id = getVarID(child->child);		
-		t1 = new_variable(id);
+		int id = getVarID(child->child);	
+		int flag = getFlag(child->child->name);
+		if(flag == 1)
+			t1 = new_variable(id);
+		else
+			t1 = new_reference(id);
 		enum VarType vtp;
 		union Varp vp = getVar(child->child, &vtp);
 		if(vp.ap->basetype == V_STRUCT){

@@ -6,6 +6,8 @@
 #include<assert.h>
 #define HASHLEN 1000
 #define STACKLEN 100
+
+int funarg = 0;
 symnode_t *symtable[HASHLEN];
 strnode_t *strtable[HASHLEN];
 funnode_t *funtable[HASHLEN];
@@ -232,7 +234,9 @@ void semantic_FunDec(struct Node *node, enum VarType retype, struct Structure *s
 	struct Node *child = node->child;
 	struct ParList * args;
 	if(child->brother->brother->tokentype == _VarList){
+		funarg = 1;
 		args = semantic_VarList(child->brother->brother);
+		funarg = 0;
 	}else{
 		args = NULL;// means this function's args is NULL
 	}
@@ -632,6 +636,10 @@ struct VariMsg *newVar(struct Node *node, enum VarType basetype, union Varp vp){
 	//if not return then can crate a new node
 	symnode_t * newvarnode =(symnode_t*) malloc(sizeof(symnode_t));
 	newvarnode->layer = stackindex;
+	if(funarg == 1 && (basetype == V_ARRAY || basetype == V_STRUCT))
+		newvarnode->flag = 1;
+	else
+		newvarnode->flag = 0;
 	newvarnode->layernext = NULL;
 	newvarnode->next = NULL;
 	if(symtable[hash] != NULL)
@@ -952,6 +960,25 @@ int getVarIDbyName(char*name){
 		temp = temp->next;
 	}
 	return -1;
+}
+int getFlag(char*name){
+	if(name == NULL || strlen(name) == 0){
+		printf("getVarIDbyName, but name is empty\n");
+		return -1;
+	}
+
+	unsigned int hash = makehash(name);
+//	printf("want name is %s, hash %d\n", idnode->name, hash);
+	symnode_t * temp = symtable[hash];
+	int maxlay = 0;	
+	while(temp != NULL){
+	//	printf("name is %s, want %s\n", temp->smb.msgp.vmsgp->name, idnode->name);
+		if(temp->smb.symtype == S_VARI && strcmp(temp->smb.msgp.vmsgp->name, name) == 0){	
+			return temp->flag;
+		}
+		temp = temp->next;
+	}
+	return -3;
 }
 struct FuncMsg * getFuncMsg(struct Node *node){
 	if(node == NULL || node->tokentype != _ID){
