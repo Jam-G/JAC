@@ -1077,9 +1077,53 @@ InterCodes translate_array(struct Node * node, Operand place, union Varp *list, 
 	place->kind = OP_ADDRESS;
 	return code1;
 }
-
+int optimize_opir(InterCodes *ir){
+	InterCodes curcode = *ir;
+	while(curcode != NULL){
+		if(curcode->code->kind == IR_ADD){// a = x+0; to a = x || a = 0+x to a =x
+			if(curcode->code->u.binop.op1->kind == OP_CONSTANT && curcode->code->u.binop.op1->u.value == 0){//
+				curcode->code->kind = IR_ASSIGN;
+				Operand tofree = curcode->code->u.binop.op1;
+				Operand left = curcode->code->u.binop.result;
+				Operand right = curcode->code->u.binop.op2;
+				curcode->code->u.assign.right = right;
+				curcode->code->u.assign.left = left;
+				free(tofree);
+			}else if(curcode->code->u.binop.op2->kind == OP_CONSTANT && curcode->code->u.binop.op2->u.value == 0){//
+				curcode->code->kind = IR_ASSIGN;
+				Operand tofree = curcode->code->u.binop.op2;
+				Operand left = curcode->code->u.binop.result;
+				Operand right = curcode->code->u.binop.op1;
+				curcode->code->u.assign.right = right;
+				curcode->code->u.assign.left = left;
+				free(tofree);
+			}
+		}else if(curcode->code->kind == IR_MUL){//a = x * 0, to a = 0
+			if(curcode->code->u.binop.op1->kind == OP_CONSTANT && curcode->code->u.binop.op1->u.value == 0){//
+				curcode->code->kind = IR_ASSIGN;
+				Operand tofree = curcode->code->u.binop.op2;
+				Operand left = curcode->code->u.binop.result;
+				Operand right = curcode->code->u.binop.op1;
+				curcode->code->u.assign.right = right;
+				curcode->code->u.assign.left = left;
+				free(tofree);
+			}else if(curcode->code->u.binop.op2->kind == OP_CONSTANT && curcode->code->u.binop.op2->u.value == 0){//
+				curcode->code->kind = IR_ASSIGN;
+				Operand tofree = curcode->code->u.binop.op1;
+				Operand left = curcode->code->u.binop.result;
+				Operand right = curcode->code->u.binop.op2;
+				curcode->code->u.assign.right = right;
+				curcode->code->u.assign.left = left;
+				free(tofree);
+			}
+		}
+		curcode = curcode->next;
+	}
+}
 //optimize
 int optimize_ir(InterCodes *ir) {
+//first to optimize every ir
+	optimize_opir(ir);
 	InterCodes curcode = *ir;
 	InterCodes nextcode, prevcode;
 	Operand op1, op2, op3, op4;
@@ -1286,7 +1330,7 @@ int optimize_ir(InterCodes *ir) {
 		case IR_DEC:
 			break;
 		case IR_FUNCTION:
-			name = curcode->code->u.uniop.op->u.func_name;
+		/*	name = curcode->code->u.uniop.op->u.func_name;
 			prevcode = curcode->prev;
 			if(prevcode != NULL && prevcode->code->kind == IR_LABEL){
 				assert(prevcode->code->u.uniop.op->kind == OP_LABEL);
@@ -1295,7 +1339,7 @@ int optimize_ir(InterCodes *ir) {
 				//prevcode = prevcode->prev;
 				prevcode = *ir;
 				while(prevcode != curcode){
-					int i;
+					
 					if(prevcode->code->kind == IR_GOTO){
 						if(prevcode->code->u.uniop.op->u.label_no == value){
 							prevcode->code->u.uniop.op->kind = OP_FUNCTION;
@@ -1312,7 +1356,7 @@ int optimize_ir(InterCodes *ir) {
 					}
 					prevcode = prevcode->next;
 				}
-			}
+			}*/
 			break;
 		case IR_PARAM:
 			break;

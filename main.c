@@ -8,6 +8,7 @@ extern int yyrestart(FILE *);
 struct Node *root;
 int haserror;
 InterCodes irtable = NULL;
+extern void print_IRs(char *filename);
 int gen_ir(struct Node * node , int level){
 	InterCodes icode;
 	//if(level == 0) printf("------------------------\n");
@@ -87,7 +88,35 @@ int main(int argc, char **argv){
 			traverse(&gen_ir, root, 0);
 			optimize_ir(&irtable);
 			optimize_ir(&irtable);
+			optimize_ir(&irtable);
+	//		output_ir(irtable, argv[]);
+			print_IRs(argv[2]);
+		//output_read_write();
+		}
+		destroyTree(root);
+		close(f);
+	}
+	if(argc == 4){
+//		printf("\n\ntesting:%s\n", argv[i]);
+		FILE *f = fopen(argv[i], "r");
+		if(!f){
+			perror("file not found\n" );
+			return -1;
+		}
+		root = NULL;
+		yylineno = 1;
+		haserror = 0;
+		yyrestart(f);
+		yyparse();
+		if(haserror == 0){
+		//	printTree(root, 0);
+			semantic();
+			traverse(&gen_ir, root, 0);
+			optimize_ir(&irtable);
+			optimize_ir(&irtable);
+			optimize_ir(&irtable);
 			output_ir(irtable, argv[2]);
+			print_IRs(argv[3]);
 		//output_read_write();
 		}
 		destroyTree(root);

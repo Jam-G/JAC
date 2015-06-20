@@ -545,6 +545,8 @@ union Varp semantic_Exp(int *leftorright, struct Node *node, enum VarType *type)
 			}
 			if(checkArg(fc, arg) < 0)
 				printf("Error type 9 at Line %d:call a function the argscant match\n", child->lineno);
+			*type = fc->retype;
+			return fc->repointer;
 		}
 	}else if(child->tokentype == _MINUS){
 		child = child->brother;

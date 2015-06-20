@@ -1,0 +1,43 @@
+FUNCTION fa :
+PARAM v2
+WRITE v2
+RETURN #1
+FUNCTION fb :
+PARAM v3
+t3 := v3
+WRITE *t3
+RETURN #2
+FUNCTION main :
+DEC v4 8
+DEC v7 8
+t6 := &v7
+t7 := #10
+*t6 := t7
+READ v5
+t9 := #2
+v6 := t9
+t10 := v5 - v6
+v5 := t10
+IF v5 > #0 GOTO label1
+GOTO label2
+LABEL label1 :
+WRITE #1
+GOTO label3
+LABEL label2 :
+IF v5 < #0 GOTO label4
+GOTO label5
+LABEL label4 :
+WRITE #2
+GOTO label3
+LABEL label5 :
+WRITE #0
+LABEL label3 :
+t20 := &v4
+t23 := #2
+*t20 := t23
+t24 := &v4
+ARG *t24
+t27 := CALL fa
+ARG &v7
+t29 := CALL fb
+RETURN #0
