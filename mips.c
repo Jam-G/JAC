@@ -234,12 +234,16 @@ void print_IR(InterCode code,FILE *fp)
 			}
 			else
 				fprintf(fp,"	addi $sp, $sp, -4 \n");
+		//	arg_index--;
+			fprintf(fp,"	move $a%d, ",arg_num - arg_index);
 			arg_index--;
-			fprintf(fp,"	move $a%d, ",arg_index);
 			print_reg(code->u.uniop.op,fp);
 			break;
 		case IR_RETURN:
-			fprintf(fp,"	move $v0, ");
+			if(code->u.uniop.op->kind == OP_CONSTANT){
+				fprintf(fp, "	li $v0, ");
+			}else
+				fprintf(fp,"	move $v0, ");
 			if(code->u.uniop.op->kind == OP_CONSTANT && code->u.uniop.op->u.value == 0)
 				fprintf(fp,"$0 ");
 			else
